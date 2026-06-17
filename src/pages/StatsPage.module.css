@@ -1,0 +1,159 @@
+.root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: 80px;
+  background: var(--bg);
+}
+
+/* Dark header */
+.header {
+  background: #18181b;
+  border-bottom: 3px solid;
+  border-image: linear-gradient(90deg, #6366f1, #a78bfa) 1;
+  padding: 20px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 12px 0;
+}
+
+.statBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.statNum {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 500;
+}
+
+.statDivider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+/* Body */
+.body {
+  flex: 1;
+  padding: 20px 18px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.directionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dirRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.1s;
+  width: 100%;
+  text-align: left;
+  min-height: 56px;
+}
+
+.dirRow:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.stripe {
+  width: 4px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.dirInfo {
+  flex: 1;
+  padding: 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dirName {
+  font-size: 13.5px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.dirBarWrap {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dirBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s var(--ease-out);
+  min-width: 2px;
+}
+
+.dirCount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: right;
+  padding-right: 4px;
+}
+
+.dirChevron {
+  width: 15px;
+  height: 15px;
+  color: var(--text-placeholder);
+  flex-shrink: 0;
+  margin-right: 12px;
+}
