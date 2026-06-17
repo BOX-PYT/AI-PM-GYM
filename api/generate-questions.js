@@ -1,7 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk'
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
 const SYSTEM_PROMPT = `你是 AI PM GYM 的出题引擎，负责生成帮助用户训练 AI 产品经理能力的题目。
 
 出题原则：
@@ -47,17 +43,32 @@ export default async function handler(req, res) {
 
 请生成 5 道训练题。`
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-      messages: [{ role: 'user', content: userPrompt }],
-      system: SYSTEM_PROMPT,
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        max_tokens: 2000,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
     })
 
-    const text = message.content[0].text.trim()
-    // 提取 JSON 数组（防止模型多输出内容）
+    if (!response.ok) {
+      const err = await response.text()
+      throw new Error(`DeepSeek API error: ${err}`)
+    }
+
+    const data = await response.json()
+    const text = data.choices[0].message.content.trim()
+
     const jsonMatch = text.match(/\[[\s\S]*\]/)
-    if (!jsonMatch) throw new Error('Invalid JSON response from Claude')
+    if (!jsonMatch) throw new Error('Invalid JSON response from model')
 
     const questions = JSON.parse(jsonMatch[0])
     return res.status(200).json({ questions })

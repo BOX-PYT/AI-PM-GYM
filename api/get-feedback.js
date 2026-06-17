@@ -1,7 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk'
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
 const SYSTEM_PROMPT = `你是 AI PM GYM 的训练教练，负责对用户的作答给出简短精准的点评。
 
 点评原则：
@@ -31,14 +27,29 @@ export default async function handler(req, res) {
 
 请给出点评。`
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 300,
-      messages: [{ role: 'user', content: userPrompt }],
-      system: SYSTEM_PROMPT,
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        max_tokens: 300,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
     })
 
-    const feedback = message.content[0].text.trim()
+    if (!response.ok) {
+      const err = await response.text()
+      throw new Error(`DeepSeek API error: ${err}`)
+    }
+
+    const data = await response.json()
+    const feedback = data.choices[0].message.content.trim()
     return res.status(200).json({ feedback })
   } catch (e) {
     console.error('get-feedback error:', e)
