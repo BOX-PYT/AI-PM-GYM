@@ -4,11 +4,11 @@ import { Icons, DIR_COLORS } from '../lib/icons'
 import styles from './TrainEntryPage.module.css'
 
 const DIRECTION_META = {
-  comprehensive:  { label: '综合训练' },
-  'ai-thinking':  { label: 'AI 产品思维' },
-  tech:           { label: '技术理解力' },
-  expression:     { label: '结构化表达' },
-  insight:        { label: '行业洞察' },
+  comprehensive:  { label: '综合训练',  category: '综合训练' },
+  'ai-thinking':  { label: 'AI 产品思维', category: '专项训练' },
+  tech:           { label: '技术理解力',  category: '专项训练' },
+  expression:     { label: '结构化表达',  category: '专项训练' },
+  insight:        { label: '行业洞察',    category: '专项训练' },
 }
 
 const LEVELS = [
@@ -36,9 +36,7 @@ export default function TrainEntryPage() {
       </button>
 
       <div className={styles.dirHeader}>
-        <span className={styles.dirIconWrap} style={{ '--c': color }}>
-          {Icons[direction] || Icons.comprehensive}
-        </span>
+        <p className={styles.category}>{meta.category}</p>
         <h1 className={styles.dirTitle}>{meta.label}</h1>
       </div>
 

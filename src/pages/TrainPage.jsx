@@ -27,7 +27,7 @@ export default function TrainPage() {
   const { user } = useUser()
   const level = state?.level || '进阶'
 
-  const [questions, setQuestions] = useState([]) // 缓存的 5 题
+  const [questions, setQuestions] = useState([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [userInput, setUserInput] = useState('')
   const [showAnalysis, setShowAnalysis] = useState(false)
@@ -35,9 +35,51 @@ export default function TrainPage() {
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [isConquer, setIsConquer] = useState(false)
   const [loadingQuestions, setLoadingQuestions] = useState(true)
-  const [sessionRecords, setSessionRecords] = useState([]) // 本轮完成的记录
+  const [sessionRecords, setSessionRecords] = useState([])
   const [sessionId, setSessionId] = useState(null)
+  const [isRecording, setIsRecording] = useState(false)
   const usedTopics = useRef([])
+  const recognitionRef = useRef(null)
+
+  const voiceSupported = typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+
+  useEffect(() => {
+    return () => recognitionRef.current?.stop()
+  }, [])
+
+  useEffect(() => {
+    if (showAnalysis && isRecording) {
+      recognitionRef.current?.stop()
+      setIsRecording(false)
+    }
+  }, [showAnalysis])
+
+  function toggleVoice() {
+    if (isRecording) {
+      recognitionRef.current?.stop()
+      setIsRecording(false)
+      return
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    const recognition = new SR()
+    recognition.lang = 'zh-CN'
+    recognition.continuous = true
+    recognition.interimResults = false
+    recognition.onresult = (e) => {
+      const text = Array.from(e.results)
+        .slice(e.resultIndex)
+        .filter(r => r.isFinal)
+        .map(r => r[0].transcript)
+        .join('')
+      if (text) setUserInput(prev => prev ? prev + text : text)
+    }
+    recognition.onerror = () => setIsRecording(false)
+    recognition.onend = () => setIsRecording(false)
+    recognitionRef.current = recognition
+    recognition.start()
+    setIsRecording(true)
+  }
 
   // 预生成 5 题
   useEffect(() => {
@@ -211,14 +253,10 @@ export default function TrainPage() {
       {/* 顶部进度 */}
       <div className={styles.topBar}>
         <div className={styles.topRow}>
-          <div className={styles.badges}>
-            <span className="badge" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
-              {DIRECTION_LABEL[direction] || direction}
-            </span>
-            <span className="badge" style={{ background: 'var(--surface2)', color: LEVEL_COLOR[level], border: `1px solid ${LEVEL_COLOR[level]}30` }}>
-              {level}
-            </span>
-          </div>
+          <span className={styles.topMeta}>
+            {DIRECTION_LABEL[direction] || direction}
+            <span className={styles.topMetaLevel}> · {level}</span>
+          </span>
           <button className={styles.closeBtn} onClick={() => navigate('/')}>退出</button>
         </div>
         <div className={styles.progressInfo}>
@@ -229,8 +267,9 @@ export default function TrainPage() {
         </div>
       </div>
 
-      {/* 题目卡片 */}
-      <div className={`card ${styles.questionCard}`}>
+      {/* 题目 */}
+      <div className={styles.questionCard}>
+        <span className={styles.questionLabel}>Q</span>
         <p className={styles.questionText}>{currentQ.question}</p>
       </div>
 
@@ -242,24 +281,44 @@ export default function TrainPage() {
             placeholder="写下你的判断或分析..."
             value={userInput}
             onChange={e => setUserInput(e.target.value)}
-            rows={5}
           />
-          <div className={styles.inputFooter}>
-            <div className={`${styles.charBar} ${unlocked ? styles.charBarDone : ''}`}>
-              <div className={styles.charFill} style={{ width: `${Math.min(charCount / MIN_CHARS * 100, 100)}%` }} />
-            </div>
-            <span className={styles.charCount}>
-              {charCount < MIN_CHARS ? `还需 ${MIN_CHARS - charCount} 字` : '✓ 可查看分析'}
-            </span>
+          {/* charBar 作为 textarea 与 footer 之间的进度分隔线 */}
+          <div className={`${styles.charBar} ${unlocked ? styles.charBarDone : ''}`}>
+            <div className={styles.charFill} style={{ width: `${Math.min(charCount / MIN_CHARS * 100, 100)}%` }} />
           </div>
-          <button
-            className="btn-primary"
-            disabled={!unlocked}
-            onClick={handleViewAnalysis}
-            style={{ marginTop: 12 }}
-          >
-            查看分析
-          </button>
+          {/* footer: mic | 字数提示 | 查看分析 */}
+          <div className={styles.inputFooter}>
+            {voiceSupported && (
+              <button
+                className={`${styles.voiceBtn} ${isRecording ? styles.voiceBtnActive : ''}`}
+                onClick={toggleVoice}
+                title={isRecording ? '停止录音' : '语音输入'}
+              >
+                {isRecording ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="6" width="12" height="12" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="22"/>
+                    <line x1="9" y1="22" x2="15" y2="22"/>
+                  </svg>
+                )}
+              </button>
+            )}
+            <span className={styles.charCount}>
+              {charCount < MIN_CHARS ? `还需 ${MIN_CHARS - charCount} 字` : '✓'}
+            </span>
+            <button
+              className={styles.ctaBtn}
+              disabled={!unlocked}
+              onClick={handleViewAnalysis}
+            >
+              查看分析 →
+            </button>
+          </div>
         </div>
       )}
 

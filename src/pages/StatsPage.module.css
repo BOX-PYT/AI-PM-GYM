@@ -7,32 +7,32 @@
   background: var(--bg);
 }
 
-/* Dark header */
+/* ── Header: paper bg ── */
 .header {
-  background: #18181b;
-  border-bottom: 3px solid;
-  border-image: linear-gradient(90deg, #6366f1, #a78bfa) 1;
-  padding: 20px 18px 18px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-solid);
+  padding: 22px 18px 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
   flex-shrink: 0;
 }
 
 .title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.04em;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   line-height: 1;
+  margin-bottom: 14px;
 }
 
+/* Stats row: same pattern as homepage */
 .statsRow {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  padding: 12px 0;
+  border-top: 1px solid var(--border-solid);
+  padding: 14px 0;
 }
 
 .statBlock {
@@ -40,120 +40,120 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
 
 .statNum {
-  font-size: 20px;
-  font-weight: 800;
-  color: #fff;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--text);
   letter-spacing: -0.04em;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.38);
-  font-weight: 500;
+  font-size: 9px;
+  color: var(--text-placeholder);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .statDivider {
   width: 1px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.1);
+  height: 26px;
+  background: var(--border-solid);
   flex-shrink: 0;
 }
 
-/* Body */
+/* ── Body ── */
 .body {
   flex: 1;
-  padding: 20px 18px;
 }
 
+/* Section label row */
 .sectionTitle {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-placeholder);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 12px;
+  letter-spacing: 0.16em;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-solid);
 }
 
+/* Direction list: hairline rows */
 .directionList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .dirRow {
   display: flex;
   align-items: center;
-  gap: 0;
-  background: var(--surface);
-  border: 1px solid var(--border-solid);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  font-family: var(--font);
-  cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.1s;
+  background: transparent;
+  border-bottom: 1px solid var(--border-solid);
   width: 100%;
   text-align: left;
-  min-height: 56px;
+  font-family: var(--font);
+  cursor: pointer;
+  min-height: 58px;
+  padding: 0;
+  transition: background 0.1s;
 }
 
 .dirRow:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  background: var(--surface2);
 }
 
+/* Hide colored stripe */
 .stripe {
-  width: 4px;
-  align-self: stretch;
-  flex-shrink: 0;
+  display: none;
 }
 
 .dirInfo {
   flex: 1;
-  padding: 12px 12px;
+  padding: 13px 18px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
 .dirName {
-  font-size: 13.5px;
+  font-size: 14px;
+  font-weight: 400;
   color: var(--text);
-  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
+/* Minimal bar: paper bg track, muted fill */
 .dirBarWrap {
-  height: 4px;
-  background: var(--surface2);
-  border-radius: 3px;
+  height: 2px;
+  background: var(--border-solid);
   overflow: hidden;
 }
 
 .dirBar {
   height: 100%;
-  border-radius: 3px;
+  background: var(--text-placeholder);
   transition: width 0.5s var(--ease-out);
   min-width: 2px;
 }
 
 .dirCount {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 300;
   color: var(--text-muted);
   min-width: 32px;
   text-align: right;
   padding-right: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .dirChevron {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   color: var(--text-placeholder);
   flex-shrink: 0;
-  margin-right: 12px;
+  margin-right: 14px;
 }

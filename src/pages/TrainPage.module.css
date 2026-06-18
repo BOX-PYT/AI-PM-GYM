@@ -1,8 +1,10 @@
+/* ── Top bar ── */
 .topBar {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 20px;
+  padding: 14px 18px 0;
+  flex-shrink: 0;
 }
 
 .topRow {
@@ -11,105 +13,114 @@
   justify-content: space-between;
 }
 
-.closeBtn {
-  background: var(--surface2);
+.topMeta {
+  font-size: 11px;
+  color: var(--text-placeholder);
+  letter-spacing: 0.02em;
+}
+
+.topMetaLevel {
   color: var(--text-muted);
-  font-size: 14px;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  line-height: 1;
+}
+
+.closeBtn {
+  background: transparent;
+  color: var(--text-placeholder);
+  font-size: 11.5px;
+  padding: 0;
   font-family: var(--font);
-  border: 1px solid var(--border-solid);
-  transition: background 0.15s, color 0.15s;
+  border: none;
+  letter-spacing: 0.04em;
+  transition: color 0.15s;
 }
 
 .closeBtn:hover {
-  background: var(--border-solid);
-  color: var(--text);
+  color: var(--text-muted);
 }
 
+/* Progress: count in accent + thin bar */
 .progressInfo {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-solid);
 }
 
 .progressText {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
   min-width: 28px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
 }
 
-.badges {
-  display: flex;
-  gap: 6px;
-}
-
-/* Question card */
+/* ── Question block ── */
 .questionCard {
-  margin-bottom: 16px;
-  padding: 20px;
+  padding: 16px 18px 16px;
+  border-bottom: 1px solid var(--border-solid);
+  flex-shrink: 0;
+}
+
+.questionLabel {
+  display: block;
+  font-size: 10px;
+  color: var(--text-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin-bottom: 10px;
 }
 
 .questionText {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14.5px;
+  font-weight: 400;
   color: var(--text);
-  line-height: 1.65;
-  letter-spacing: -0.01em;
+  line-height: 1.75;
+  letter-spacing: 0.01em;
 }
 
-/* Input section */
+/* ── Input section (flex: 1, fills remaining space) ── */
 .inputSection {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
+/* Textarea: no border, full width, fills flex space */
 .textarea {
+  flex: 1;
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border-solid);
-  border-radius: var(--radius);
-  padding: 14px;
+  background: var(--bg);
+  border: none;
+  border-radius: 0;
+  padding: 16px 18px;
   color: var(--text);
   resize: none;
-  font-size: 14.5px;
+  font-size: 14px;
   font-family: var(--font);
-  line-height: 1.65;
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  line-height: 1.7;
   outline: none;
-}
-
-.textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow-sm);
+  min-height: 100px;
 }
 
 .textarea::placeholder {
   color: var(--text-placeholder);
+  font-style: italic;
 }
 
-.inputFooter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
+/* charBar: 2px progress line between textarea and footer */
 .charBar {
-  flex: 1;
-  height: 3px;
+  height: 2px;
   background: var(--border-solid);
-  border-radius: 2px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .charFill {
   height: 100%;
   background: var(--text-placeholder);
-  border-radius: 2px;
   transition: width 0.2s ease-out, background 0.3s ease-out;
 }
 
@@ -117,88 +128,148 @@
   background: var(--success);
 }
 
-.charCount {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  min-width: 88px;
-  text-align: right;
-  font-weight: 500;
+/* Footer: mic | char count | CTA — all in one row */
+.inputFooter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-top: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-solid);
 }
 
-/* Analysis section */
+.charCount {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-placeholder);
+  letter-spacing: 0.02em;
+}
+
+/* Voice button */
+.voiceBtn {
+  background: transparent;
+  border: 1px solid var(--border-solid);
+  border-radius: 0;
+  color: var(--text-placeholder);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.voiceBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.voiceBtnActive {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* CTA button: bordered accent, sits in the footer row */
+.ctaBtn {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: transparent;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-family: var(--font);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border-radius: 0;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.ctaBtn:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+.ctaBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Analysis section ── */
 .analysisSection {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  flex: 1;
 }
 
 .analysisBlock {
-  background: var(--surface);
-  border: 1px solid var(--border-solid);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-solid);
 }
 
 .analysisLabel {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-placeholder);
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.16em;
   margin-bottom: 10px;
 }
 
 .loadingText {
-  color: var(--text-muted);
+  color: var(--text-placeholder);
   font-size: 13.5px;
+  font-style: italic;
 }
 
 .feedbackText {
-  font-size: 14.5px;
+  font-size: 14px;
   color: var(--text);
-  line-height: 1.7;
+  line-height: 1.75;
 }
 
 .answerText {
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text-muted);
-  line-height: 1.7;
+  line-height: 1.75;
 }
 
-/* Action row */
+/* Action row: conquer toggle + next button */
 .actionRow {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-top: 4px;
+  padding: 14px 18px;
+  flex-shrink: 0;
 }
 
 .conquerBtn {
-  background: var(--surface);
+  background: transparent;
   border: 1px solid var(--border-solid);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 500;
+  border-radius: 0;
+  color: var(--text-placeholder);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-weight: 400;
   font-family: var(--font);
   white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: 0.02em;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
 .conquerActive {
-  border-color: #f59e0b;
-  color: #d97706;
-  background: rgba(245, 158, 11, 0.08);
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
 }
 
 .nextBtn {
   flex: 1;
 }
 
-/* Loading */
+/* ── Loading state ── */
 .loadingWrap {
   flex: 1;
   display: flex;
@@ -216,10 +287,10 @@
 }
 
 .loadingDots span {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--accent);
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
+  background: var(--border-solid);
   animation: dot-bounce 1.2s ease-in-out infinite;
 }
 
@@ -227,6 +298,6 @@
 .loadingDots span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes dot-bounce {
-  0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
+  0%, 80%, 100% { transform: scale(0.55); opacity: 0.4; }
   40% { transform: scale(1); opacity: 1; }
 }

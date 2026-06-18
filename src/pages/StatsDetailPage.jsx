@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
-import { Icons, DIR_COLORS } from '../lib/icons'
+import { Icons } from '../lib/icons'
 import styles from './StatsDetailPage.module.css'
 
 const DIR_KEY = {
@@ -12,8 +12,6 @@ const DIR_KEY = {
   行业洞察:      'insight',
 }
 
-const LEVEL_COLOR = { 入门: '#10b981', 进阶: '#f59e0b', 挑战: '#ef4444' }
-
 export default function StatsDetailPage() {
   const { direction } = useParams()
   const dirName = decodeURIComponent(direction)
@@ -22,8 +20,6 @@ export default function StatsDetailPage() {
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
-
-  const color = DIR_COLORS[DIR_KEY[dirName]] || '#6366f1'
 
   useEffect(() => {
     if (!user) return
@@ -51,7 +47,7 @@ export default function StatsDetailPage() {
 
   return (
     <div className={styles.root}>
-      <header className={styles.header} style={{ '--accent-color': color }}>
+      <header className={styles.header}>
         <button className={styles.back} onClick={() => navigate('/stats')}>
           {Icons.chevronLeft}
           统计
@@ -86,15 +82,7 @@ export default function StatsDetailPage() {
                   onClick={() => toggleExpand(r.id)}
                 >
                   <div className={styles.cardMeta}>
-                    <span
-                      className="badge"
-                      style={{
-                        background: `${LEVEL_COLOR[r.level]}18`,
-                        color: LEVEL_COLOR[r.level],
-                      }}
-                    >
-                      {r.level}
-                    </span>
+                    <span className={styles.levelTag}>{r.level}</span>
                     {r.is_conquer && (
                       <span className={styles.conquerTag}>待攻克</span>
                     )}

@@ -7,12 +7,11 @@
   background: var(--bg);
 }
 
-/* Dark header */
+/* ── Header: paper bg ── */
 .header {
-  background: #18181b;
-  border-bottom: 3px solid;
-  border-image: linear-gradient(90deg, #6366f1, #a78bfa) 1;
-  padding: 20px 18px 18px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-solid);
+  padding: 22px 18px 0;
   flex-shrink: 0;
 }
 
@@ -21,67 +20,68 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
+  padding-bottom: 18px;
 }
 
 .title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.04em;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .subtitle {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.38);
-  font-weight: 500;
+  font-size: 11px;
+  color: var(--text-placeholder);
+  letter-spacing: 0.04em;
 }
 
+/* "专项训练 →" — small bordered accent button */
 .practiceBtn {
-  background: rgba(167, 139, 250, 0.18);
-  color: #a78bfa;
-  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 0;
   padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 400;
   font-family: var(--font);
   white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: 0.04em;
   transition: background 0.15s;
 }
 
 .practiceBtn:hover {
-  background: rgba(167, 139, 250, 0.28);
+  background: var(--accent-dim);
 }
 
-/* Body */
+/* ── Body ── */
 .body {
   flex: 1;
-  padding: 16px 18px;
 }
 
+/* Empty state */
 .empty {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--text-muted);
-  padding: 60px 0;
+  padding: 80px 18px;
 }
 
 .emptyIcon {
-  width: 48px;
-  height: 48px;
-  background: var(--surface2);
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
   color: var(--text-placeholder);
+  margin-bottom: 4px;
 }
 
 .emptyIcon svg {
@@ -90,25 +90,26 @@
 }
 
 .emptyText {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  margin: 0;
-}
-
-.emptyHint {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 400;
   color: var(--text-muted);
   margin: 0;
 }
 
+.emptyHint {
+  font-size: 12px;
+  color: var(--text-placeholder);
+  margin: 0;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── Filter row: flat text tabs ── */
 .filterRow {
   display: flex;
-  gap: 6px;
   overflow-x: auto;
-  padding-bottom: 4px;
-  margin-bottom: 14px;
   scrollbar-width: none;
+  border-bottom: 1px solid var(--border-solid);
 }
 
 .filterRow::-webkit-scrollbar {
@@ -116,58 +117,73 @@
 }
 
 .filterBtn {
-  background: var(--surface);
-  border: 1px solid var(--border-solid);
-  border-radius: 20px;
-  color: var(--text-muted);
-  padding: 5px 12px;
-  font-size: 12.5px;
-  font-weight: 500;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--text-placeholder);
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 400;
   font-family: var(--font);
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.filterBtn:hover {
+  color: var(--text-muted);
 }
 
 .filterActive {
-  background: var(--accent-dim);
-  border-color: rgba(99,102,241,0.3);
   color: var(--accent);
-  font-weight: 600;
+  border-bottom-color: var(--accent);
+  font-weight: 500;
 }
 
+/* ── Record list: hairline rows, no cards ── */
 .list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border-solid);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--border-solid);
+  padding: 14px 18px;
+  background: transparent;
 }
 
 .cardTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+/* Direction label — plain small text in accent */
+.card :global(.badge) {
+  background: transparent !important;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--accent) !important;
+  letter-spacing: 0.08em;
+  padding: 0;
 }
 
 .date {
-  font-size: 11.5px;
-  color: var(--text-muted);
+  font-size: 10px;
+  color: var(--text-placeholder);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
 }
 
 .question {
   font-size: 13.5px;
+  font-weight: 400;
   color: var(--text);
-  line-height: 1.6;
+  line-height: 1.65;
   margin-bottom: 12px;
-  font-weight: 500;
 }
 
 .cardActions {
@@ -175,33 +191,37 @@
   gap: 8px;
 }
 
+/* 重练 — small accent bordered */
 .retryBtn {
-  background: var(--accent-dim);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 0;
   color: var(--accent);
-  border-radius: var(--radius-sm);
-  padding: 7px 14px;
-  font-size: 12.5px;
-  font-weight: 600;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 400;
   font-family: var(--font);
+  letter-spacing: 0.04em;
   transition: background 0.15s;
 }
 
 .retryBtn:hover {
-  background: rgba(99,102,241,0.18);
+  background: var(--accent-dim);
 }
 
+/* 取消标记 — ghost text */
 .unmarkBtn {
   background: transparent;
-  border: 1px solid var(--border-solid);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  padding: 7px 14px;
-  font-size: 12.5px;
+  border: none;
+  border-radius: 0;
+  color: var(--text-placeholder);
+  padding: 6px 10px;
+  font-size: 12px;
   font-family: var(--font);
-  transition: background 0.15s, color 0.15s;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
 }
 
 .unmarkBtn:hover {
-  background: var(--surface2);
-  color: var(--text);
+  color: var(--text-muted);
 }
