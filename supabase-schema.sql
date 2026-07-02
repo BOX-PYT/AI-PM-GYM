@@ -39,3 +39,19 @@ alter table records enable row level security;
 create policy "allow all for anon" on users for all to anon using (true) with check (true);
 create policy "allow all for anon" on sessions for all to anon using (true) with check (true);
 create policy "allow all for anon" on records for all to anon using (true) with check (true);
+
+-- ── 能力雷达重构：records 增加维度与结构化评分字段 ──
+alter table records add column if not exists dimension text;   -- product|ai-tech|narrative|workflow
+alter table records add column if not exists score int;        -- LLM 结构化得分 0-100
+alter table records add column if not exists hit_points jsonb;
+alter table records add column if not exists missed jsonb;
+
+-- ── RAG 知识源：训练营课件切片（MVP 关键词检索，不上向量库）──
+create table if not exists course_chunks (
+  id uuid primary key default gen_random_uuid(),
+  content text not null,
+  dimension_tags text[],
+  keywords text[]
+);
+alter table course_chunks enable row level security;
+create policy "allow all for anon" on course_chunks for all to anon using (true) with check (true);

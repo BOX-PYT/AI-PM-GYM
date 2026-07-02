@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Icons, DIR_COLORS } from '../lib/icons'
+import { getDimension } from '../lib/dimensions'
 import styles from './TrainEntryPage.module.css'
 
 const DIRECTION_META = {
@@ -20,8 +21,9 @@ const LEVELS = [
 export default function TrainEntryPage() {
   const { direction } = useParams()
   const navigate = useNavigate()
-  const meta = DIRECTION_META[direction] || { label: direction }
-  const color = DIR_COLORS[direction] || '#6366f1'
+  const dim = getDimension(direction)
+  const meta = DIRECTION_META[direction] || (dim ? { label: dim.label, category: '能力训练' } : { label: direction })
+  const color = dim ? dim.color : (DIR_COLORS[direction] || '#6366f1')
   const [level, setLevel] = useState('进阶')
 
   function start() {

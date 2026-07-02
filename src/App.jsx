@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
-import HomePage from './pages/HomePage'
+import RadarHomePage from './pages/RadarHomePage'
+import DimensionPage from './pages/DimensionPage'
 import TrainEntryPage from './pages/TrainEntryPage'
 import TrainPage from './pages/TrainPage'
 import ReviewPage from './pages/ReviewPage'
@@ -12,9 +13,10 @@ function BottomNav() {
     <nav className="bottom-nav">
       <NavLink to="/" end>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polygon points="12 3 20 12 12 21 4 12" />
+          <polygon points="12 7.5 16 12 12 16.5 8 12" />
         </svg>
-        训练
+        成长
       </NavLink>
       <NavLink to="/stats">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -36,7 +38,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<><HomePage /><BottomNav /></>} />
+        <Route path="/" element={<><RadarHomePage /><BottomNav /></>} />
+        <Route path="/dimension/:key" element={<DimensionPage />} />
         <Route path="/train/:direction" element={<TrainEntryPage />} />
         <Route path="/train/:direction/session" element={<TrainPage />} />
         <Route path="/review" element={<ReviewPage />} />

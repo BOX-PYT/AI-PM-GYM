@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
+import { getDimension } from '../lib/dimensions'
 import styles from './TrainPage.module.css'
 
 const DIRECTION_LABEL = {
@@ -27,11 +28,15 @@ export default function TrainPage() {
   const { user } = useUser()
   const level = state?.level || '进阶'
 
+  const dim = getDimension(direction)
+  const dirLabel = dim ? dim.label : (DIRECTION_LABEL[direction] || direction)
+
   const [questions, setQuestions] = useState([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [userInput, setUserInput] = useState('')
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [feedbackDetail, setFeedbackDetail] = useState({ score: null, hit_points: [], missed: [] })
   const [feedbackLoading, setFeedbackLoading] = useState(false)
   const [isConquer, setIsConquer] = useState(false)
   const [loadingQuestions, setLoadingQuestions] = useState(true)
@@ -93,7 +98,7 @@ export default function TrainPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          direction: DIRECTION_LABEL[direction] || direction,
+          direction: dim ? `${dim.label}（覆盖：${dim.topics}）` : (DIRECTION_LABEL[direction] || direction),
           level,
           used_topics: usedTopics.current,
         }),
@@ -118,7 +123,7 @@ export default function TrainPage() {
       .from('sessions')
       .insert({
         user_id: user.id,
-        direction: DIRECTION_LABEL[direction] || direction,
+        direction: dirLabel,
         level,
       })
       .select()
@@ -148,8 +153,14 @@ export default function TrainPage() {
       })
       const data = await res.json()
       setFeedback(data.feedback)
+      setFeedbackDetail({
+        score: typeof data.score === 'number' ? data.score : null,
+        hit_points: data.hit_points || [],
+        missed: data.missed || [],
+      })
     } catch {
       setFeedback('点评加载失败，请继续下一题。')
+      setFeedbackDetail({ score: null, hit_points: [], missed: [] })
     } finally {
       setFeedbackLoading(false)
     }
@@ -160,19 +171,28 @@ export default function TrainPage() {
     try {
       const sid = await ensureSession()
       if (user && sid && currentQ) {
-        const record = {
+        const legacyRecord = {
           user_id: user.id,
           session_id: sid,
           question: currentQ.question,
           answer: currentQ.answer,
           user_input: userInput,
           ai_feedback: feedback,
-          direction: currentQ.direction || DIRECTION_LABEL[direction] || direction,
+          direction: dirLabel,
           level,
           is_conquer: isConquer,
         }
-        await supabase.from('records').insert(record)
-        setSessionRecords(prev => [...prev, { ...record, is_conquer: isConquer }])
+        const record = {
+          ...legacyRecord,
+          dimension: dim ? dim.key : null,
+          score: feedbackDetail.score,
+          hit_points: feedbackDetail.hit_points,
+          missed: feedbackDetail.missed,
+        }
+        // 先按新 schema 写；若列不存在（DDL 未执行）则回退到旧字段，保证不丢记录
+        const { error } = await supabase.from('records').insert(record)
+        if (error) await supabase.from('records').insert(legacyRecord)
+        setSessionRecords(prev => [...prev, { ...record }])
       }
     } catch (e) {
       console.error('保存记录失败', e)
@@ -183,6 +203,7 @@ export default function TrainPage() {
       setUserInput('')
       setShowAnalysis(false)
       setFeedback('')
+      setFeedbackDetail({ score: null, hit_points: [], missed: [] })
       setIsConquer(false)
     } else {
       // 5 题完成，更新 total_completed，跳转回顾页
@@ -211,11 +232,13 @@ export default function TrainPage() {
             answer: currentQ?.answer,
             user_input: userInput,
             ai_feedback: feedback,
-            direction: DIRECTION_LABEL[direction] || direction,
+            direction: dirLabel,
+            dimension: dim ? dim.key : null,
+            score: feedbackDetail.score,
             level,
             is_conquer: isConquer,
           }],
-          direction: DIRECTION_LABEL[direction] || direction,
+          direction: dirLabel,
           level,
         },
       })
@@ -254,7 +277,7 @@ export default function TrainPage() {
       <div className={styles.topBar}>
         <div className={styles.topRow}>
           <span className={styles.topMeta}>
-            {DIRECTION_LABEL[direction] || direction}
+            {dirLabel}
             <span className={styles.topMetaLevel}> · {level}</span>
           </span>
           <button className={styles.closeBtn} onClick={() => navigate('/')}>退出</button>
@@ -326,11 +349,30 @@ export default function TrainPage() {
       {showAnalysis && (
         <div className={styles.analysisSection}>
           <div className={styles.analysisBlock}>
-            <h3 className={styles.analysisLabel}>AI 点评</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 className={styles.analysisLabel}>AI 点评</h3>
+              {!feedbackLoading && typeof feedbackDetail.score === 'number' && (
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>
+                  {feedbackDetail.score} 分{dim ? ` · ${dim.label}` : ''}
+                </span>
+              )}
+            </div>
             {feedbackLoading ? (
               <p className={styles.loadingText}>点评生成中...</p>
             ) : (
-              <p className={styles.feedbackText}>{feedback}</p>
+              <>
+                <p className={styles.feedbackText}>{feedback}</p>
+                {(feedbackDetail.hit_points.length > 0 || feedbackDetail.missed.length > 0) && (
+                  <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.7, color: 'var(--text-muted)' }}>
+                    {feedbackDetail.hit_points.length > 0 && (
+                      <div>✓ 命中：{feedbackDetail.hit_points.join('、')}</div>
+                    )}
+                    {feedbackDetail.missed.length > 0 && (
+                      <div>△ 待补：{feedbackDetail.missed.join('、')}</div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
