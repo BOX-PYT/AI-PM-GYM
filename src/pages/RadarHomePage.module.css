@@ -128,6 +128,97 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Suggestion card (RAG) ── */
+.suggestCard {
+  margin: 0 18px 24px;
+  border: 1px solid var(--border-solid);
+  border-left: 3px solid var(--accent);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.suggestLabel {
+  font-size: 10px;
+  color: var(--text-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.suggestDim {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.suggestText {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.suggestHint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.retrievedBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface2);
+  padding: 10px 12px;
+}
+
+.retrievedLabel {
+  font-size: 10px;
+  color: var(--text-placeholder);
+  letter-spacing: 0.06em;
+}
+
+.retrievedItem {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.suggestBtn {
+  align-self: flex-start;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-family: var(--font);
+  transition: background 0.15s;
+}
+
+.suggestBtn:disabled {
+  color: var(--text-placeholder);
+  border-color: var(--border-solid);
+}
+
+.tradeoff {
+  font-size: 11px;
+  color: var(--text-placeholder);
+  line-height: 1.6;
+  margin: 0;
+  padding-top: 2px;
+  border-top: 1px dashed var(--border-solid);
+}
+
 /* ── Dimension rows ── */
 .dimList {
   display: flex;
