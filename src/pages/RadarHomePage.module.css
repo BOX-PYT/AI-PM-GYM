@@ -1,0 +1,357 @@
+.root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: 80px;
+  background: var(--bg);
+}
+
+.header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-solid);
+  padding: 22px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.headerTop {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.wordmark {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text);
+  line-height: 1;
+}
+
+.ai, .pm, .gym {
+  color: var(--text);
+  font-style: normal;
+}
+
+.idRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.idValue {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-placeholder);
+  letter-spacing: 0.06em;
+  flex: 1;
+}
+
+.idCopyBtn {
+  font-size: 10px;
+  color: var(--text-placeholder);
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font);
+  letter-spacing: 0.04em;
+  transition: color 0.15s;
+}
+
+.idCopyBtn:hover { color: var(--text-muted); }
+
+.tagline {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+.body { flex: 1; }
+
+/* ── Radar ── */
+.radarWrap {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 26px auto 30px;
+  aspect-ratio: 1 / 1;
+}
+
+.radar {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.gridRing {
+  fill: none;
+  stroke: var(--border-solid);
+  stroke-width: 1;
+}
+
+.axis {
+  stroke: var(--border-solid);
+  stroke-width: 1;
+}
+
+.dataArea {
+  fill: var(--accent);
+  fill-opacity: 0.13;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.axisLabel {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.axisVal {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Suggestion card (RAG) ── */
+.suggestCard {
+  margin: 0 18px 24px;
+  border: 1px solid var(--border-solid);
+  border-left: 3px solid var(--accent);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.suggestLabel {
+  font-size: 10px;
+  color: var(--text-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.suggestDim {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.suggestText {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.suggestHint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.retrievedBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface2);
+  padding: 10px 12px;
+}
+
+.retrievedLabel {
+  font-size: 10px;
+  color: var(--text-placeholder);
+  letter-spacing: 0.06em;
+}
+
+.retrievedItem {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.suggestBtn {
+  align-self: flex-start;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-family: var(--font);
+  transition: background 0.15s;
+}
+
+.suggestBtn:disabled {
+  color: var(--text-placeholder);
+  border-color: var(--border-solid);
+}
+
+.tradeoff {
+  font-size: 11px;
+  color: var(--text-placeholder);
+  line-height: 1.6;
+  margin: 0;
+  padding-top: 2px;
+  border-top: 1px dashed var(--border-solid);
+}
+
+/* ── Dimension rows ── */
+.dimList {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border-solid);
+}
+
+.dimRow {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border-bottom: 1px solid var(--border-solid);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+  min-height: 62px;
+  padding: 0;
+  transition: background 0.1s;
+}
+
+.dimRow:hover { background: var(--surface2); }
+
+.stripe {
+  width: 3px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.dimText {
+  flex: 1;
+  padding: 13px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dimName {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.dimLevel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dimWhy {
+  font-size: 11px;
+  color: var(--text-placeholder);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.dimChevron {
+  color: var(--text-placeholder);
+  display: flex;
+  align-items: center;
+  padding-right: 14px;
+  flex-shrink: 0;
+}
+
+.dimChevron svg { width: 14px; height: 14px; }
+
+/* ── Restore ── */
+.restoreToggle {
+  background: transparent;
+  color: var(--text-placeholder);
+  font-size: 11px;
+  font-family: var(--font);
+  padding: 14px 18px;
+  text-align: left;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+}
+
+.restoreToggle:hover { color: var(--text-muted); }
+
+.restoreRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0 18px 14px;
+}
+
+.restoreInput {
+  flex: 1;
+  min-width: 160px;
+  background: var(--bg);
+  border: 1px solid var(--border-solid);
+  border-radius: 0;
+  padding: 8px 11px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.restoreInput::placeholder {
+  color: var(--text-placeholder);
+  font-family: var(--font);
+  letter-spacing: 0;
+}
+
+.restoreInput:focus { border-color: var(--accent); }
+
+.restoreConfirm {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-family: var(--font);
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.restoreError {
+  width: 100%;
+  font-size: 11px;
+  color: var(--accent);
+  margin: 0;
+}
