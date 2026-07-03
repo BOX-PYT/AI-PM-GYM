@@ -120,6 +120,12 @@ export default function StatsDetailPage() {
                         <p className={`${styles.blockText} ${styles.answer}`}>{r.answer}</p>
                       </div>
                     )}
+                    {r.follow_up_q && (
+                      <div className={styles.block}>
+                        <span className={styles.blockLabel}>追问：{r.follow_up_q}</span>
+                        <p className={styles.blockText}>{r.follow_up_a}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

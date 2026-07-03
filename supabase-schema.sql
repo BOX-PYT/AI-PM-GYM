@@ -55,3 +55,7 @@ create table if not exists course_chunks (
 );
 alter table course_chunks enable row level security;
 create policy "allow all for anon" on course_chunks for all to anon using (true) with check (true);
+
+-- ── 追问功能：每道题可追问一次，答案随该题记录一起存 ──
+alter table records add column if not exists follow_up_q text;
+alter table records add column if not exists follow_up_a text;

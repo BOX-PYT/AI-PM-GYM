@@ -38,6 +38,10 @@ export default function TrainPage() {
   const [feedback, setFeedback] = useState('')
   const [feedbackDetail, setFeedbackDetail] = useState({ score: null, hit_points: [], missed: [] })
   const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [followUpInput, setFollowUpInput] = useState('')
+  const [followUpQ, setFollowUpQ] = useState('')
+  const [followUpA, setFollowUpA] = useState('')
+  const [followUpLoading, setFollowUpLoading] = useState(false)
   const [isConquer, setIsConquer] = useState(false)
   const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [sessionRecords, setSessionRecords] = useState([])
@@ -166,6 +170,33 @@ export default function TrainPage() {
     }
   }
 
+  async function handleAskFollowUp() {
+    if (!followUpInput.trim() || followUpQ || !currentQ) return
+    const q = followUpInput.trim()
+    setFollowUpLoading(true)
+    try {
+      const res = await fetch('/api/followup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: currentQ.question,
+          answer: currentQ.answer,
+          user_input: userInput,
+          ai_feedback: feedback,
+          follow_up_question: q,
+        }),
+      })
+      const data = await res.json()
+      setFollowUpQ(q)
+      setFollowUpA(data.answer || '回答生成失败，请稍后再试。')
+    } catch {
+      setFollowUpQ(q)
+      setFollowUpA('回答生成失败，请稍后再试。')
+    } finally {
+      setFollowUpLoading(false)
+    }
+  }
+
   async function handleNext() {
     // 保存当前记录
     try {
@@ -188,6 +219,8 @@ export default function TrainPage() {
           score: feedbackDetail.score,
           hit_points: feedbackDetail.hit_points,
           missed: feedbackDetail.missed,
+          follow_up_q: followUpQ || null,
+          follow_up_a: followUpA || null,
         }
         // 先按新 schema 写；若列不存在（DDL 未执行）则回退到旧字段，保证不丢记录
         const { error } = await supabase.from('records').insert(record)
@@ -205,6 +238,9 @@ export default function TrainPage() {
       setFeedback('')
       setFeedbackDetail({ score: null, hit_points: [], missed: [] })
       setIsConquer(false)
+      setFollowUpInput('')
+      setFollowUpQ('')
+      setFollowUpA('')
     } else {
       // 5 题完成，更新 total_completed，跳转回顾页
       if (user) {
@@ -235,6 +271,8 @@ export default function TrainPage() {
             direction: dirLabel,
             dimension: dim ? dim.key : null,
             score: feedbackDetail.score,
+            follow_up_q: followUpQ || null,
+            follow_up_a: followUpA || null,
             level,
             is_conquer: isConquer,
           }],
@@ -379,6 +417,38 @@ export default function TrainPage() {
           <div className={styles.analysisBlock}>
             <h3 className={styles.analysisLabel}>参考答案</h3>
             <p className={styles.answerText}>{currentQ.answer}</p>
+          </div>
+
+          <div className={styles.analysisBlock}>
+            <h3 className={styles.analysisLabel}>追问（1 次机会）</h3>
+            {followUpQ ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>你问：{followUpQ}</p>
+                {followUpLoading ? (
+                  <p className={styles.loadingText}>回答生成中...</p>
+                ) : (
+                  <p className={styles.feedbackText}>{followUpA}</p>
+                )}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <textarea
+                  className={styles.textarea}
+                  style={{ minHeight: 40, flex: 1 }}
+                  placeholder="对题目或答案里的概念有疑问？可以追问一次"
+                  value={followUpInput}
+                  onChange={e => setFollowUpInput(e.target.value)}
+                  disabled={followUpLoading}
+                />
+                <button
+                  className={styles.ctaBtn}
+                  onClick={handleAskFollowUp}
+                  disabled={!followUpInput.trim() || followUpLoading}
+                >
+                  {followUpLoading ? '生成中...' : '追问'}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className={styles.actionRow}>
