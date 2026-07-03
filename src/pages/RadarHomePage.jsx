@@ -56,7 +56,7 @@ export default function RadarHomePage() {
       const data = await res.json()
       setSuggestion(data.suggestion)
     } catch {
-      // 生成服务不可用（本地未接入 /api）时，降级展示检索到的课件要点
+      // 生成服务不可用（本地未接入 /api）时，降级展示检索到的知识库要点
     } finally {
       setSuggestLoading(false)
     }
@@ -149,7 +149,7 @@ export default function RadarHomePage() {
           })}
         </div>
 
-        {/* 下一步建议（RAG：基于训练营课件检索） */}
+        {/* 下一步建议（RAG：基于精选知识库检索） */}
         <div className={styles.suggestCard}>
           <div className={styles.suggestHead}>
             <span className={styles.suggestLabel}>下一步 · 最薄弱维度</span>
@@ -160,7 +160,7 @@ export default function RadarHomePage() {
 
           {!suggestion && retrieved.length > 0 && (
             <div className={styles.retrievedBox}>
-              <span className={styles.retrievedLabel}>检索到的课件要点（生成服务未接入时的降级展示）</span>
+              <span className={styles.retrievedLabel}>相关岗位知识要点（生成服务未接入时的降级展示）</span>
               {retrieved.map((c, i) => (
                 <p key={i} className={styles.retrievedItem}>· {c}</p>
               ))}
@@ -168,15 +168,12 @@ export default function RadarHomePage() {
           )}
 
           {!suggestion && retrieved.length === 0 && (
-            <p className={styles.suggestHint}>基于训练营课件检索给你一条可落地的下一步，而不是让大模型自由发挥。</p>
+            <p className={styles.suggestHint}>基于真实岗位要求给你一条可落地的下一步，而不是让大模型自由发挥。</p>
           )}
 
           <button className={styles.suggestBtn} onClick={handleSuggest} disabled={suggestLoading}>
-            {suggestLoading ? '检索课件中...' : suggestion || retrieved.length ? '换一条建议' : '生成下一步建议'}
+            {suggestLoading ? '生成中...' : suggestion || retrieved.length ? '换一条建议' : '生成下一步建议'}
           </button>
-          <p className={styles.tradeoff}>
-            为什么用 RAG：对零基础转型者，让 LLM 自由生成只会得到"多学习多练习"式的正确废话。用课件约束换取可信度——代价是覆盖面受课件限制。
-          </p>
         </div>
 
         {/* 4 维度入口 */}

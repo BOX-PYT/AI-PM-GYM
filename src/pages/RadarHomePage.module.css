@@ -210,15 +210,6 @@
   border-color: var(--border-solid);
 }
 
-.tradeoff {
-  font-size: 11px;
-  color: var(--text-placeholder);
-  line-height: 1.6;
-  margin: 0;
-  padding-top: 2px;
-  border-top: 1px dashed var(--border-solid);
-}
-
 /* ── Dimension rows ── */
 .dimList {
   display: flex;

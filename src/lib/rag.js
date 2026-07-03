@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 import { getDimension } from './dimensions'
 
-// MVP 知识源：训练营课件的最小切片。
+// MVP 知识源：精选 AI PM 知识库的最小切片。
 // 生产环境这些 chunk 存在 Supabase 的 course_chunks 表；本地/演示用此内置兜底，
 // 保证 RAG 检索在未灌库时也能跑通。检索优先读 DB，为空时回退到这里。
 export const FALLBACK_CHUNKS = [
@@ -48,11 +48,11 @@ export const FALLBACK_CHUNKS = [
 ]
 
 // 关键词检索 top-k：按 dimension_tags 命中 + 关键词与该维度主题词的重叠打分。
-// MVP 不上向量库，纯关键词匹配即可证明"用课件约束 LLM"这个概念。
+// MVP 不上向量库，纯关键词匹配即可证明"用知识库约束 LLM"这个概念。
 export async function retrieveChunks(dimKey, { limit = 3 } = {}) {
   let chunks = []
   try {
-    // 检索不应阻塞 UI：DB 查询设 2s 超时，超时/失败/空表均回退内置课件
+    // 检索不应阻塞 UI：DB 查询设 2s 超时，超时/失败/空表均回退内置知识库
     const query = supabase.from('course_chunks').select('content, dimension_tags, keywords')
     const timeout = new Promise(resolve => setTimeout(() => resolve({ data: null }), 2000))
     const { data } = await Promise.race([query, timeout])
