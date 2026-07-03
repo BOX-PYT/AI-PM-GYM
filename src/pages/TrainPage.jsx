@@ -46,7 +46,7 @@ export default function TrainPage() {
   const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [sessionRecords, setSessionRecords] = useState([])
   const [sessionId, setSessionId] = useState(null)
-  const [isRecording, setIsRecording] = useState(false)
+  const [recordingTarget, setRecordingTarget] = useState(null) // null | 'answer' | 'followup'
   const usedTopics = useRef([])
   const recognitionRef = useRef(null)
 
@@ -58,18 +58,21 @@ export default function TrainPage() {
   }, [])
 
   useEffect(() => {
-    if (showAnalysis && isRecording) {
+    if (showAnalysis && recordingTarget === 'answer') {
       recognitionRef.current?.stop()
-      setIsRecording(false)
+      setRecordingTarget(null)
     }
   }, [showAnalysis])
 
-  function toggleVoice() {
-    if (isRecording) {
+  // target: 'answer' | 'followup'，setter 是对应文本框的 setState
+  function toggleVoice(target, setter) {
+    if (recordingTarget === target) {
       recognitionRef.current?.stop()
-      setIsRecording(false)
+      setRecordingTarget(null)
       return
     }
+    recognitionRef.current?.stop() // 切换输入框前先停掉正在跑的那个
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
     recognition.lang = 'zh-CN'
@@ -81,13 +84,13 @@ export default function TrainPage() {
         .filter(r => r.isFinal)
         .map(r => r[0].transcript)
         .join('')
-      if (text) setUserInput(prev => prev ? prev + text : text)
+      if (text) setter(prev => prev ? prev + text : text)
     }
-    recognition.onerror = () => setIsRecording(false)
-    recognition.onend = () => setIsRecording(false)
+    recognition.onerror = () => setRecordingTarget(null)
+    recognition.onend = () => setRecordingTarget(null)
     recognitionRef.current = recognition
     recognition.start()
-    setIsRecording(true)
+    setRecordingTarget(target)
   }
 
   // 预生成 5 题
@@ -232,6 +235,8 @@ export default function TrainPage() {
     }
 
     if (currentIdx < 4) {
+      recognitionRef.current?.stop()
+      setRecordingTarget(null)
       setCurrentIdx(i => i + 1)
       setUserInput('')
       setShowAnalysis(false)
@@ -351,11 +356,11 @@ export default function TrainPage() {
           <div className={styles.inputFooter}>
             {voiceSupported && (
               <button
-                className={`${styles.voiceBtn} ${isRecording ? styles.voiceBtnActive : ''}`}
-                onClick={toggleVoice}
-                title={isRecording ? '停止录音' : '语音输入'}
+                className={`${styles.voiceBtn} ${recordingTarget === 'answer' ? styles.voiceBtnActive : ''}`}
+                onClick={() => toggleVoice('answer', setUserInput)}
+                title={recordingTarget === 'answer' ? '停止录音' : '语音输入'}
               >
-                {isRecording ? (
+                {recordingTarget === 'answer' ? (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="6" width="12" height="12" />
                   </svg>
@@ -440,6 +445,27 @@ export default function TrainPage() {
                   onChange={e => setFollowUpInput(e.target.value)}
                   disabled={followUpLoading}
                 />
+                {voiceSupported && (
+                  <button
+                    className={`${styles.voiceBtn} ${recordingTarget === 'followup' ? styles.voiceBtnActive : ''}`}
+                    onClick={() => toggleVoice('followup', setFollowUpInput)}
+                    title={recordingTarget === 'followup' ? '停止录音' : '语音输入'}
+                    type="button"
+                  >
+                    {recordingTarget === 'followup' ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="6" width="12" height="12" />
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="22"/>
+                        <line x1="9" y1="22" x2="15" y2="22"/>
+                      </svg>
+                    )}
+                  </button>
+                )}
                 <button
                   className={styles.ctaBtn}
                   onClick={handleAskFollowUp}
