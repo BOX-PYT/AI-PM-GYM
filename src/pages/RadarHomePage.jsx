@@ -27,9 +27,10 @@ function pickWeakestDim(levels) {
 
 export default function RadarHomePage() {
   const navigate = useNavigate()
-  const { user, loading } = useUser()
+  const { user, loading, error: userError } = useUser()
   const [levels, setLevels] = useState({ product: 0, 'ai-tech': 0, narrative: 0, workflow: 0 })
   const [copied, setCopied] = useState(false)
+  const [codeCopied, setCodeCopied] = useState(false)
   const [showRestore, setShowRestore] = useState(false)
   const [restoreInput, setRestoreInput] = useState('')
   const [restoreError, setRestoreError] = useState('')
@@ -82,12 +83,19 @@ export default function RadarHomePage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  async function copyRecoveryCode() {
+    if (!user?.recoveryCode) return
+    await navigator.clipboard.writeText(user.recoveryCode)
+    setCodeCopied(true)
+    setTimeout(() => setCodeCopied(false), 2000)
+  }
+
   async function handleRestore() {
     if (!restoreInput.trim()) return
     setRestoreError('')
     try {
-      const { restoreUserById } = await import('../lib/userId')
-      await restoreUserById(restoreInput)
+      const { restoreAccountByCode } = await import('../lib/userId')
+      await restoreAccountByCode(restoreInput)
       window.location.reload()
     } catch (e) {
       setRestoreError(e.message)
@@ -112,10 +120,19 @@ export default function RadarHomePage() {
             <button className={styles.idCopyBtn} onClick={copyId} disabled={loading}>
               {copied ? '已复制' : '复制 ID'}
             </button>
+            <button className={styles.idCopyBtn} onClick={copyRecoveryCode} disabled={loading || !user?.recoveryCode}>
+              {codeCopied ? '已复制' : '复制恢复码'}
+            </button>
           </div>
         </div>
         <p className={styles.tagline}>你的 AI 产品经理能力，随练习实时生长</p>
       </header>
+
+      {userError && (
+        <div style={{ margin: '12px 18px', padding: '10px 12px', border: '1px solid var(--accent)', color: 'var(--accent)', fontSize: 12, lineHeight: 1.6 }}>
+          登录会话建立失败，数据无法保存：{userError.message || String(userError)}
+        </div>
+      )}
 
       <div className={styles.body}>
         {/* 能力雷达图 */}
@@ -194,13 +211,13 @@ export default function RadarHomePage() {
         </div>
 
         <button className={styles.restoreToggle} onClick={() => setShowRestore(v => !v)}>
-          {showRestore ? '取消' : '换设备？输入 ID 恢复'}
+          {showRestore ? '取消' : '换设备？输入恢复码找回'}
         </button>
         {showRestore && (
           <div className={styles.restoreRow}>
             <input
               className={styles.restoreInput}
-              placeholder="输入 AIPK-XXXX-XXXX"
+              placeholder="输入恢复码 XXXX-XXXX-XXXX-XXXX"
               value={restoreInput}
               onChange={e => setRestoreInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleRestore()}
