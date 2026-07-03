@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
@@ -11,10 +11,13 @@ export default function ConquerPage() {
   const [records, setRecords] = useState([])
   const [filter, setFilter] = useState('全部')
   const [loading, setLoading] = useState(true)
+  const ignoreRef = useRef(false)
 
   useEffect(() => {
     if (!user) return
+    ignoreRef.current = false
     loadRecords()
+    return () => { ignoreRef.current = true }
   }, [user])
 
   async function loadRecords() {
@@ -26,11 +29,12 @@ export default function ConquerPage() {
         .eq('user_id', user.id)
         .eq('is_conquer', true)
         .order('created_at', { ascending: false })
+      if (ignoreRef.current) return
       setRecords((data || []).map(r => ({ ...r, dimKey: resolveRecordDimension(r) })))
     } catch (e) {
       console.error(e)
     } finally {
-      setLoading(false)
+      if (!ignoreRef.current) setLoading(false)
     }
   }
 

@@ -65,15 +65,18 @@ export default function RadarHomePage() {
 
   useEffect(() => {
     if (!user) return
+    let cancelled = false
     ;(async () => {
       const { data } = await supabase
         .from('records')
         .select('dimension, direction, score, created_at')
         .eq('user_id', user.id)
+      if (cancelled) return // effect 被重新触发（如 StrictMode 双调用）时，丢弃这次过期的结果
       const computed = computeDimensionLevels(data || [])
       setLevels(computed)
       setActiveDim(pickWeakestDim(computed)) // 真实数据到位后重新挑一次最薄弱维度
     })()
+    return () => { cancelled = true }
   }, [user])
 
   async function copyId() {

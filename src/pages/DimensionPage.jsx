@@ -18,6 +18,7 @@ export default function DimensionPage() {
 
   useEffect(() => {
     if (!user || !dim) return
+    let cancelled = false
     ;(async () => {
       const { data } = await supabase
         .from('records')
@@ -25,12 +26,14 @@ export default function DimensionPage() {
         .eq('user_id', user.id)
         .eq('dimension', dim.key)
         .order('created_at', { ascending: true })
+      if (cancelled) return
       const rows = data || []
       const scores = rows.filter(r => typeof r.score === 'number').map(r => r.score)
       setLevel(dimensionLevel(scores))
       setAnswered(rows.length)
       setConquerItems(rows.filter(r => r.is_conquer).reverse())
     })()
+    return () => { cancelled = true }
   }, [user, dim])
 
   if (!dim) {

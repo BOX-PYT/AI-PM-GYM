@@ -43,6 +43,7 @@ export default function TrainPage() {
   const [followUpA, setFollowUpA] = useState('')
   const [followUpLoading, setFollowUpLoading] = useState(false)
   const [isConquer, setIsConquer] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [sessionRecords, setSessionRecords] = useState([])
   const [sessionId, setSessionId] = useState(null)
@@ -202,6 +203,8 @@ export default function TrainPage() {
 
   async function handleNext() {
     // 保存当前记录
+    setSaveError('')
+    let saved = false
     try {
       const sid = await ensureSession()
       if (user && sid && currentQ) {
@@ -227,11 +230,20 @@ export default function TrainPage() {
         }
         // 先按新 schema 写；若列不存在（DDL 未执行）则回退到旧字段，保证不丢记录
         const { error } = await supabase.from('records').insert(record)
-        if (error) await supabase.from('records').insert(legacyRecord)
+        if (error) {
+          const { error: legacyErr } = await supabase.from('records').insert(legacyRecord)
+          if (legacyErr) throw legacyErr
+        }
+        saved = true
         setSessionRecords(prev => [...prev, { ...record }])
       }
     } catch (e) {
       console.error('保存记录失败', e)
+      setSaveError(`这道题没保存成功：${e.message || e}，点"重试保存"再试一次，否则不会计入统计。`)
+    }
+    if (user && currentQ && !saved) {
+      setSaveError(prev => prev || '这道题没保存成功，可能没有登录会话，点"重试保存"再试一次。')
+      return // 保存失败就停在当前题，不跳下一题/不进回顾页，避免用户没发现就丢了这道题
     }
 
     if (currentIdx < 4) {
@@ -477,6 +489,12 @@ export default function TrainPage() {
             )}
           </div>
 
+          {saveError && (
+            <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--accent)', lineHeight: 1.6 }}>
+              {saveError}
+            </p>
+          )}
+
           <div className={styles.actionRow}>
             <button
               className={`${styles.conquerBtn} ${isConquer ? styles.conquerActive : ''}`}
@@ -489,7 +507,7 @@ export default function TrainPage() {
               onClick={handleNext}
               disabled={feedbackLoading}
             >
-              {currentIdx < 4 ? '下一题' : '完成本轮'}
+              {saveError ? '重试保存' : (currentIdx < 4 ? '下一题' : '完成本轮')}
             </button>
           </div>
         </div>

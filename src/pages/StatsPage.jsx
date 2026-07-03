@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
@@ -10,10 +10,13 @@ export default function StatsPage() {
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const ignoreRef = useRef(false)
 
   useEffect(() => {
     if (!user) return
+    ignoreRef.current = false
     loadStats()
+    return () => { ignoreRef.current = true } // 丢弃 effect 被重新触发后过期的结果
   }, [user])
 
   async function loadStats() {
@@ -53,6 +56,7 @@ export default function StatsPage() {
       const conquerCount = records.filter(r => r.is_conquer).length
       const levels = computeDimensionLevels(records)
 
+      if (ignoreRef.current) return
       setStats({
         totalCompleted: userData.total_completed || 0,
         streak,
@@ -64,7 +68,7 @@ export default function StatsPage() {
     } catch (e) {
       console.error(e)
     } finally {
-      setLoading(false)
+      if (!ignoreRef.current) setLoading(false)
     }
   }
 

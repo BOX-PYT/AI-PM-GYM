@@ -17,16 +17,19 @@ export default function StatsDetailPage() {
 
   useEffect(() => {
     if (!user || !dim) return
+    let cancelled = false
     supabase
       .from('records')
       .select('*')
       .eq('user_id', user.id)
       .then(({ data }) => {
+        if (cancelled) return
         const filtered = (data || []).filter(r => resolveRecordDimension(r) === dim.key)
         filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         setRecords(filtered)
         setLoading(false)
       })
+    return () => { cancelled = true }
   }, [user, dim])
 
   function toggleExpand(id) {
