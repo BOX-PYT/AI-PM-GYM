@@ -17,6 +17,14 @@ function ring(frac) {
   return DIMENSIONS.map((_, i) => axisPoint(i, frac).join(',')).join(' ')
 }
 
+// 最薄弱维度：多个维度并列最低分时（如全部为初始 0 分）随机挑一个，
+// 而不是每次都固定选数组里第一个，否则并列时会一直卡在同一个维度。
+function pickWeakestDim(levels) {
+  const minLevel = Math.min(...DIMENSIONS.map(d => levels[d.key] || 0))
+  const tied = DIMENSIONS.filter(d => (levels[d.key] || 0) === minLevel)
+  return tied[Math.floor(Math.random() * tied.length)]
+}
+
 export default function RadarHomePage() {
   const navigate = useNavigate()
   const { user, loading } = useUser()
@@ -28,23 +36,21 @@ export default function RadarHomePage() {
   const [suggestLoading, setSuggestLoading] = useState(false)
   const [suggestion, setSuggestion] = useState('')
   const [retrieved, setRetrieved] = useState([])
-
-  const weakestDim = DIMENSIONS.reduce(
-    (min, d) => ((levels[d.key] || 0) < (levels[min.key] || 0) ? d : min),
-    DIMENSIONS[0]
-  )
+  const [activeDim, setActiveDim] = useState(() => pickWeakestDim(levels))
 
   async function handleSuggest() {
     setSuggestLoading(true)
     setSuggestion('')
     setRetrieved([])
+    const dim = pickWeakestDim(levels) // 并列最低分时每次重新随机挑一个，避免"换一条"总卡同一维度
+    setActiveDim(dim)
     try {
-      const chunks = await retrieveChunks(weakestDim.key, { limit: 3 })
+      const chunks = await retrieveChunks(dim.key, { limit: 3 })
       setRetrieved(chunks)
       const res = await fetch('/api/suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dimension_label: weakestDim.label, chunks }),
+        body: JSON.stringify({ dimension_label: dim.label, chunks }),
       })
       if (!res.ok) throw new Error('suggest api unavailable')
       const data = await res.json()
@@ -63,7 +69,9 @@ export default function RadarHomePage() {
         .from('records')
         .select('dimension, direction, score, created_at')
         .eq('user_id', user.id)
-      setLevels(computeDimensionLevels(data || []))
+      const computed = computeDimensionLevels(data || [])
+      setLevels(computed)
+      setActiveDim(pickWeakestDim(computed)) // 真实数据到位后重新挑一次最薄弱维度
     })()
   }, [user])
 
@@ -145,7 +153,7 @@ export default function RadarHomePage() {
         <div className={styles.suggestCard}>
           <div className={styles.suggestHead}>
             <span className={styles.suggestLabel}>下一步 · 最薄弱维度</span>
-            <span className={styles.suggestDim} style={{ color: weakestDim.color }}>{weakestDim.label}</span>
+            <span className={styles.suggestDim} style={{ color: activeDim.color }}>{activeDim.label}</span>
           </div>
 
           {suggestion && <p className={styles.suggestText}>{suggestion}</p>}
