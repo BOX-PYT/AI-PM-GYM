@@ -2,14 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
+import { DIMENSIONS, computeDimensionLevels, resolveRecordDimension } from '../lib/dimensions'
 import styles from './StatsPage.module.css'
-
-const DIRECTION_COLORS = {
-  'AI 产品思维': '#8b5cf6',
-  技术理解力:    '#0ea5e9',
-  结构化表达:    '#10b981',
-  行业洞察:      '#f59e0b',
-}
 
 export default function StatsPage() {
   const { user, loading: userLoading } = useUser()
@@ -27,15 +21,17 @@ export default function StatsPage() {
     try {
       const [userRes, recordsRes] = await Promise.all([
         supabase.from('users').select('total_completed, created_at').eq('id', user.id).single(),
-        supabase.from('records').select('direction, is_conquer, created_at').eq('user_id', user.id),
+        supabase.from('records').select('direction, dimension, score, is_conquer, created_at').eq('user_id', user.id),
       ])
 
       const userData = userRes.data || {}
       const records = recordsRes.data || []
 
-      const byDirection = {}
+      const byDim = {}
       records.forEach(r => {
-        byDirection[r.direction] = (byDirection[r.direction] || 0) + 1
+        const dimKey = resolveRecordDimension(r)
+        if (!dimKey) return
+        byDim[dimKey] = (byDim[dimKey] || 0) + 1
       })
 
       const dates = [...new Set(records.map(r => r.created_at?.slice(0, 10)))].sort()
@@ -55,13 +51,15 @@ export default function StatsPage() {
       }
 
       const conquerCount = records.filter(r => r.is_conquer).length
+      const levels = computeDimensionLevels(records)
 
       setStats({
         totalCompleted: userData.total_completed || 0,
         streak,
         conquerCount,
         totalAnswered: records.length,
-        byDirection,
+        byDim,
+        levels,
       })
     } catch (e) {
       console.error(e)
@@ -73,6 +71,8 @@ export default function StatsPage() {
   if (userLoading || loading) {
     return <div className="page loading-spinner">加载中...</div>
   }
+
+  const maxCount = Math.max(...Object.values(stats?.byDim || {}), 1)
 
   return (
     <div className={styles.root}>
@@ -102,24 +102,27 @@ export default function StatsPage() {
       </header>
 
       <div className={styles.body}>
-        <h2 className={styles.sectionTitle}>各方向训练量</h2>
+        <h2 className={styles.sectionTitle}>各维度训练量</h2>
         <div className={styles.directionList}>
-          {Object.entries(DIRECTION_COLORS).map(([name, color]) => {
-            const count = stats?.byDirection?.[name] || 0
-            const maxCount = Math.max(...Object.values(stats?.byDirection || {}), 1)
+          {DIMENSIONS.map(d => {
+            const count = stats?.byDim?.[d.key] || 0
+            const level = stats?.levels?.[d.key] || 0
             return (
               <button
-                key={name}
+                key={d.key}
                 className={styles.dirRow}
-                onClick={() => navigate(`/stats/${encodeURIComponent(name)}`)}
+                onClick={() => navigate(`/stats/${d.key}`)}
               >
-                <span className={styles.stripe} style={{ background: color }} />
+                <span className={styles.stripe} style={{ background: d.color }} />
                 <div className={styles.dirInfo}>
-                  <span className={styles.dirName}>{name}</span>
+                  <span className={styles.dirName}>
+                    {d.label}
+                    <span style={{ marginLeft: 8, fontSize: 11, color: d.color, fontWeight: 600 }}>Lv {level}</span>
+                  </span>
                   <div className={styles.dirBarWrap}>
                     <div
                       className={styles.dirBar}
-                      style={{ width: `${(count / maxCount) * 100}%`, background: color }}
+                      style={{ width: `${(count / maxCount) * 100}%`, background: d.color }}
                     />
                   </div>
                 </div>

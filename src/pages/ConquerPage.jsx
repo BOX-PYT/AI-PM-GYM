@@ -2,17 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
+import { DIMENSIONS, resolveRecordDimension } from '../lib/dimensions'
 import styles from './ConquerPage.module.css'
-
-const ALL_DIRECTIONS = ['综合训练', 'AI 产品思维', '技术理解力', '结构化表达', '行业洞察']
-
-const DIR_KEY = {
-  综合训练: 'comprehensive',
-  'AI 产品思维': 'ai-thinking',
-  技术理解力: 'tech',
-  结构化表达: 'expression',
-  行业洞察: 'insight',
-}
 
 export default function ConquerPage() {
   const { user, loading: userLoading } = useUser()
@@ -35,7 +26,7 @@ export default function ConquerPage() {
         .eq('user_id', user.id)
         .eq('is_conquer', true)
         .order('created_at', { ascending: false })
-      setRecords(data || [])
+      setRecords((data || []).map(r => ({ ...r, dimKey: resolveRecordDimension(r) })))
     } catch (e) {
       console.error(e)
     } finally {
@@ -48,8 +39,15 @@ export default function ConquerPage() {
     setRecords(prev => prev.filter(r => r.id !== recordId))
   }
 
-  const filters = ['全部', ...ALL_DIRECTIONS]
-  const filtered = filter === '全部' ? records : records.filter(r => r.direction === filter)
+  const filters = ['全部', ...DIMENSIONS.map(d => d.key)]
+  const filtered = filter === '全部' ? records : records.filter(r => r.dimKey === filter)
+
+  function dimLabel(key) {
+    return DIMENSIONS.find(d => d.key === key)?.label || key
+  }
+  function dimColor(key) {
+    return DIMENSIONS.find(d => d.key === key)?.color
+  }
 
   function formatDate(ts) {
     if (!ts) return ''
@@ -58,7 +56,7 @@ export default function ConquerPage() {
   }
 
   function startConquerSession() {
-    navigate('/train/comprehensive', { state: { level: '进阶', isConquerMode: true } })
+    navigate('/train/product', { state: { level: '进阶', isConquerMode: true } })
   }
 
   if (userLoading || loading) {
@@ -103,7 +101,7 @@ export default function ConquerPage() {
                   className={`${styles.filterBtn} ${filter === f ? styles.filterActive : ''}`}
                   onClick={() => setFilter(f)}
                 >
-                  {f}
+                  {f === '全部' ? '全部' : dimLabel(f)}
                 </button>
               ))}
             </div>
@@ -112,8 +110,8 @@ export default function ConquerPage() {
               {filtered.map(r => (
                 <div key={r.id} className={styles.card}>
                   <div className={styles.cardTop}>
-                    <span className="badge" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
-                      {r.direction}
+                    <span className="badge" style={{ background: 'var(--accent-dim)', color: dimColor(r.dimKey) || 'var(--accent)' }}>
+                      {r.dimKey ? dimLabel(r.dimKey) : r.direction}
                     </span>
                     <span className={styles.date}>{formatDate(r.created_at)}</span>
                   </div>
@@ -121,7 +119,7 @@ export default function ConquerPage() {
                   <div className={styles.cardActions}>
                     <button
                       className={styles.retryBtn}
-                      onClick={() => navigate(`/train/${DIR_KEY[r.direction] || 'comprehensive'}`)}
+                      onClick={() => navigate(`/train/${r.dimKey || 'product'}`)}
                     >
                       重练
                     </button>

@@ -2,19 +2,13 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
+import { getDimension, resolveRecordDimension } from '../lib/dimensions'
 import { Icons } from '../lib/icons'
 import styles from './StatsDetailPage.module.css'
 
-const DIR_KEY = {
-  'AI 产品思维': 'ai-thinking',
-  技术理解力:    'tech',
-  结构化表达:    'expression',
-  行业洞察:      'insight',
-}
-
 export default function StatsDetailPage() {
-  const { direction } = useParams()
-  const dirName = decodeURIComponent(direction)
+  const { direction: dimKey } = useParams()
+  const dim = getDimension(dimKey)
   const navigate = useNavigate()
   const { user } = useUser()
   const [records, setRecords] = useState([])
@@ -22,18 +16,18 @@ export default function StatsDetailPage() {
   const [expanded, setExpanded] = useState(null)
 
   useEffect(() => {
-    if (!user) return
+    if (!user || !dim) return
     supabase
       .from('records')
       .select('*')
       .eq('user_id', user.id)
-      .eq('direction', dirName)
-      .order('created_at', { ascending: false })
       .then(({ data }) => {
-        setRecords(data || [])
+        const filtered = (data || []).filter(r => resolveRecordDimension(r) === dim.key)
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        setRecords(filtered)
         setLoading(false)
       })
-  }, [user, dirName])
+  }, [user, dim])
 
   function toggleExpand(id) {
     setExpanded(prev => prev === id ? null : id)
@@ -45,6 +39,15 @@ export default function StatsDetailPage() {
     return `${d.getMonth() + 1}月${d.getDate()}日`
   }
 
+  if (!dim) {
+    return (
+      <div className="page">
+        <button className={styles.back} onClick={() => navigate('/stats')}>{Icons.chevronLeft}统计</button>
+        <p style={{ marginTop: 40, textAlign: 'center', color: 'var(--text-muted)' }}>未找到该能力维度</p>
+      </div>
+    )
+  }
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
@@ -53,7 +56,7 @@ export default function StatsDetailPage() {
           统计
         </button>
         <div className={styles.headerInfo}>
-          <h1 className={styles.title}>{dirName}</h1>
+          <h1 className={styles.title}>{dim.label}</h1>
           <p className={styles.subtitle}>
             {loading ? '加载中...' : `共 ${records.length} 道题`}
           </p>
@@ -65,10 +68,10 @@ export default function StatsDetailPage() {
           <div className="loading-spinner">加载中...</div>
         ) : records.length === 0 ? (
           <div className={styles.empty}>
-            <p>还没有这个方向的记录</p>
+            <p>还没有这个维度的记录</p>
             <button
               className={styles.startBtn}
-              onClick={() => navigate(`/train/${DIR_KEY[dirName] || 'comprehensive'}`)}
+              onClick={() => navigate(`/train/${dim.key}`)}
             >
               开始训练
             </button>
@@ -83,6 +86,9 @@ export default function StatsDetailPage() {
                 >
                   <div className={styles.cardMeta}>
                     <span className={styles.levelTag}>{r.level}</span>
+                    {typeof r.score === 'number' && (
+                      <span className={styles.levelTag} style={{ color: dim.color }}>{r.score} 分</span>
+                    )}
                     {r.is_conquer && (
                       <span className={styles.conquerTag}>待攻克</span>
                     )}

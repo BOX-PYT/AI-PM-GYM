@@ -39,7 +39,7 @@ export const DIMENSIONS = [
 
 export const DIMENSION_MAP = Object.fromEntries(DIMENSIONS.map(d => [d.key, d]))
 
-// 旧训练方向 → 新能力维度（历史 records 兼容 / 旧路由回退用）
+// 旧训练方向（英文路由 key）→ 新能力维度（旧路由回退用，如 /train/ai-thinking）
 export const LEGACY_DIRECTION_TO_DIMENSION = {
   'ai-thinking': 'product',
   tech: 'ai-tech',
@@ -48,8 +48,24 @@ export const LEGACY_DIRECTION_TO_DIMENSION = {
   comprehensive: 'product',
 }
 
+// 旧训练方向（records.direction 存的中文标签）→ 新能力维度
+// 用于重构前、还没被回填脚本补上 dimension 字段的历史记录
+export const LEGACY_LABEL_TO_DIMENSION = {
+  'AI 产品思维': 'product',
+  技术理解力: 'ai-tech',
+  结构化表达: 'narrative',
+  行业洞察: 'product',
+  综合训练: 'product',
+}
+
 export function getDimension(key) {
   return DIMENSION_MAP[key] || DIMENSION_MAP[LEGACY_DIRECTION_TO_DIMENSION[key]] || null
+}
+
+// 统一解析一条 record 归属的维度 key：优先用新字段 dimension，
+// 缺失时按旧中文 direction 标签兜底。
+export function resolveRecordDimension(record) {
+  return record.dimension || LEGACY_LABEL_TO_DIMENSION[record.direction] || null
 }
 
 // 单维度水平值：Q（近 k 题平均分）× M（答题量边际递减）
@@ -71,7 +87,7 @@ export function computeDimensionLevels(records) {
     (a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0)
   )
   for (const r of sorted) {
-    const dimKey = r.dimension || LEGACY_DIRECTION_TO_DIMENSION[r.direction]
+    const dimKey = resolveRecordDimension(r)
     if (!byDim[dimKey]) continue
     if (typeof r.score === 'number') byDim[dimKey].push(r.score)
   }
