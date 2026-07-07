@@ -1,181 +1,306 @@
 {
-  "version": "1.0",
-  "note": "LLM-as-judge 校准集。human_score 为预填建议分，请逐条复核（可修改），确认后把 confirmed 改为 true；judge-calibration.mjs 对 confirmed=false 的条目会告警。通过线：|LLM分-人工分|≤10 的占比 ≥80%。",
-  "cases": [
+  "ran_at": "2026-07-07T14:53:48.461Z",
+  "rate": 0.9583333333333334,
+  "results": [
     {
-      "id": "P1", "dimension": "product", "tier": "高",
+      "id": "P1",
+      "dimension": "product",
+      "tier": "高",
       "question": "你负责的 AI 客服上线一个月，老板问效果怎么样，你会用哪个指标回答？为什么不用调用量？",
       "answer": "用价值指标如用户采纳率/问题自助解决率：用户获得价值时一定触发。调用量是虚荣指标，反复追问也会推高调用量，恰恰可能说明答得差。",
       "user_input": "我会用'用户采纳 AI 答案且未转人工的会话占比'来回答，这是用户真正获得价值才会触发的指标。调用量是虚荣指标——用户反复追问同一个问题调用量也会涨，反而说明回答质量差。我还会配合转人工率做交叉验证，两个指标一起看才知道效果是真是假。",
-      "human_score": 92, "confirmed": true
+      "human_score": 92,
+      "confirmed": true,
+      "llm_score": 85,
+      "diff": 7
     },
     {
-      "id": "P2", "dimension": "product", "tier": "高",
+      "id": "P2",
+      "dimension": "product",
+      "tier": "高",
       "question": "新做一个 AI 合同审核工具，没有任何历史数据，第一版怎么上线？",
       "answer": "三条路：规则/专家经验兜底先上线跑数据；借公开数据集或竞品公开信息初始化；小样本+人工标注滚动积累。切忌等数据齐了再上线。",
       "user_input": "先用专家规则兜底上线：把法务的审核经验写成规则清单，第一版靠规则+人工复核跑起来，目的是收集真实数据。同时用小样本人工标注滚动积累，攒够了再逐步引入模型判断。绝不等数据齐了再上线，那样永远上不了。",
-      "human_score": 88, "confirmed": true
+      "human_score": 88,
+      "confirmed": true,
+      "llm_score": 85,
+      "diff": 3
     },
     {
-      "id": "P3", "dimension": "product", "tier": "中",
+      "id": "P3",
+      "dimension": "product",
+      "tier": "中",
       "question": "AI 功能上线后老板要求同时优化准确率、响应速度、成本三个指标，资源只够做一个，你怎么排优先级？",
       "answer": "回到北极星指标和用户价值：哪个指标当前是用户流失/不采纳的主因就先做哪个；用数据定位瓶颈（如准确率低于阈值时用户直接弃用，则准确率优先），并说明放弃另外两个的代价可控。",
       "user_input": "我会先做准确率，因为准确率是 AI 产品的根本，准确率不行用户就不会用了。速度和成本可以后面再优化。",
-      "human_score": 58, "confirmed": true
+      "human_score": 58,
+      "confirmed": true,
+      "llm_score": 50,
+      "diff": 8
     },
     {
-      "id": "P4", "dimension": "product", "tier": "中",
+      "id": "P4",
+      "dimension": "product",
+      "tier": "中",
       "question": "你的 AI 功能日调用 200 次，团队提议上向量知识库+微调优化效果，你怎么判断？",
       "answer": "量级判断：200 次/日的量级用规则+提示词即可，重基建投入不划算；先确认瓶颈是什么（badcase 归因），量级上来（万级）再考虑知识库等重方案。",
       "user_input": "我觉得可以先分析一下现在的问题出在哪里，看看 badcase 是什么原因造成的，如果是知识不够那就上知识库。",
-      "human_score": 55, "confirmed": true
+      "human_score": 55,
+      "confirmed": true,
+      "llm_score": 60,
+      "diff": 5
     },
     {
-      "id": "P5", "dimension": "product", "tier": "低",
+      "id": "P5",
+      "dimension": "product",
+      "tier": "低",
       "question": "你负责的 AI 客服上线一个月，老板问效果怎么样，你会用哪个指标回答？为什么不用调用量？",
       "answer": "用价值指标如用户采纳率；调用量是虚荣指标。",
       "user_input": "北极星指标是唯一能代表产品核心价值的指标，它很重要，产品经理应该重视北极星指标的选取。",
-      "human_score": 25, "confirmed": true
+      "human_score": 25,
+      "confirmed": true,
+      "llm_score": 15,
+      "diff": 10
     },
     {
-      "id": "P6", "dimension": "product", "tier": "低",
+      "id": "P6",
+      "dimension": "product",
+      "tier": "低",
       "question": "新做一个 AI 审核工具，没有任何历史数据，第一版怎么上线？",
       "answer": "规则兜底先上线、公开数据集初始化、小样本标注滚动积累。",
       "user_input": "可以先做个 MVP 试试看效果怎么样。",
-      "human_score": 15, "confirmed": true
+      "human_score": 15,
+      "confirmed": true,
+      "llm_score": 25,
+      "diff": 10
     },
     {
-      "id": "T1", "dimension": "ai-tech", "tier": "高",
+      "id": "T1",
+      "dimension": "ai-tech",
+      "tier": "高",
       "question": "品牌标准手册每月更新，审核结论要求带出处，知识注入选 RAG 还是微调？",
       "answer": "选 RAG：更新成本低（重跑入库即可）、检索命中即出处、可解释；微调知识焊进权重无法溯源且每次更新要重训。RAG 的代价是效果受召回质量限制。",
       "user_input": "选 RAG。两个决定性理由：手册月更，RAG 只要重新入库，微调每次要重造样本重训练，维护成本差一个量级；审核要求每条结论带出处，RAG 检索命中即出处，微调把知识焊进权重根本给不出来源。代价是 RAG 受召回限制，召回不到就答不对，所以要配检索质量评测。",
-      "human_score": 93, "confirmed": true
+      "human_score": 93,
+      "confirmed": true,
+      "llm_score": 88,
+      "diff": 5
     },
     {
-      "id": "T2", "dimension": "ai-tech", "tier": "高",
+      "id": "T2",
+      "dimension": "ai-tech",
+      "tier": "高",
       "question": "用户输入一句话查订单状态，团队方案是用 Agent 实现，你怎么评估？",
       "answer": "不该用 Agent：查订单是单步确定性任务，一次工具调用即可。Agent 适合需要拆解、调多工具、中间结果不确定的任务，代价是延迟高、成本高、可控性差。",
       "user_input": "我会反对。查订单是单步确定性任务，一个 API 调用加模板回复就够了。Agent 的适用条件是任务需要拆解、要调多个工具、中间结果不确定——这里一条都不占，却要付出延迟高、成本高、行为不可控的代价。简单任务上 Agent 是拿复杂度换故事，不是换价值。",
-      "human_score": 90, "confirmed": true
+      "human_score": 90,
+      "confirmed": true,
+      "llm_score": 100,
+      "diff": 10
     },
     {
-      "id": "T3", "dimension": "ai-tech", "tier": "中",
+      "id": "T3",
+      "dimension": "ai-tech",
+      "tier": "中",
       "question": "RAG 系统答错了一个知识库里明明有的问题，可能的原因是什么？",
       "answer": "大概率是检索环节：切分不当导致语义被割裂、召回没命中（query 与文档表述不匹配）、top-k 太小或排序不佳；也可能是命中了但上下文太长被模型忽略。先查检索日志定位是没召回还是召回了没用上。",
       "user_input": "可能是检索没有召回到相关内容，知识库里有不代表能搜到。可以试试调整 top-k 或者换个 embedding 模型。",
-      "human_score": 60, "confirmed": true
+      "human_score": 60,
+      "confirmed": true,
+      "llm_score": 65,
+      "diff": 5
     },
     {
-      "id": "T4", "dimension": "ai-tech", "tier": "中",
+      "id": "T4",
+      "dimension": "ai-tech",
+      "tier": "中",
       "question": "老板问：为什么我们的 AI 功能每次回答成本差这么多？从 token 角度解释。",
       "answer": "成本=输入+输出 token 计费：上下文越长（历史对话、检索结果、系统提示词）输入越贵；回答越长输出越贵。控制手段：上下文压缩/截断、缓存系统提示词、限制输出长度、简单问题路由到小模型。",
       "user_input": "因为每次调用的 token 数量不一样，问题越长、回答越长就越贵。可以限制回答长度来控制成本。",
-      "human_score": 55, "confirmed": true
+      "human_score": 55,
+      "confirmed": true,
+      "llm_score": 45,
+      "diff": 10
     },
     {
-      "id": "T5", "dimension": "ai-tech", "tier": "低",
+      "id": "T5",
+      "dimension": "ai-tech",
+      "tier": "低",
       "question": "品牌标准手册每月更新，审核结论要求带出处，知识注入选 RAG 还是微调？",
       "answer": "选 RAG：更新成本低、可溯源；微调不可溯源且更新贵。",
       "user_input": "选微调，因为微调之后模型就学会了这些知识，回答会更准确更快，RAG 还要额外搭检索系统比较麻烦。",
-      "human_score": 20, "confirmed": true
+      "human_score": 20,
+      "confirmed": true,
+      "llm_score": 20,
+      "diff": 0
     },
     {
-      "id": "T6", "dimension": "ai-tech", "tier": "低",
+      "id": "T6",
+      "dimension": "ai-tech",
+      "tier": "低",
       "question": "用户输入一句话查订单状态，团队方案是用 Agent 实现，你怎么评估？",
       "answer": "不该用 Agent：单步确定性任务，Agent 代价是延迟成本可控性。",
       "user_input": "Agent 是未来的趋势，大家都在做 Agent，我觉得可以支持团队尝试新技术。",
-      "human_score": 18, "confirmed": true
+      "human_score": 18,
+      "confirmed": true,
+      "llm_score": 20,
+      "diff": 2
     },
     {
-      "id": "N1", "dimension": "narrative", "tier": "高",
+      "id": "N1",
+      "dimension": "narrative",
+      "tier": "高",
       "question": "用 1 分钟向面试官讲清你做过的一个 AI 项目。请写出你的讲述提纲。",
       "answer": "结论先行（做了什么产品、给谁用、核心结果），再按问题→决策→结果展开：真实痛点与约束、关键决策及为什么不选另一方案、量化结果。面试官最想听决策和取舍。",
       "user_input": "开头一句话定位：我做了面向品牌方设计团队的 AI 审核工具，把单份初审从 3 小时压到 20 分钟。然后讲问题：150 分钟是机械比对，卡住加盟转化。再讲关键决策：数值判断走规则引擎、LLM 只取数，为什么不全交给大模型——因为审核要可解释可追责。最后结果：漏检率目标 1% 以内、单份成本 1 块钱。",
-      "human_score": 93, "confirmed": true
+      "human_score": 93,
+      "confirmed": true,
+      "llm_score": 85,
+      "diff": 8
     },
     {
-      "id": "N2", "dimension": "narrative", "tier": "高",
+      "id": "N2",
+      "dimension": "narrative",
+      "tier": "高",
       "question": "向 CEO 汇报一个 AI 项目的季度进展，只有 3 分钟，你怎么组织内容？",
       "answer": "金字塔：结论先行（一句话讲清价值和状态），3 个并列论据支撑（如效果数据/成本/风险），每个论据下才展开细节。不从背景和过程讲起。",
       "user_input": "第一句直接给结论：项目达成季度目标，采纳率从 60% 到 78%，成本降了三成。然后三个支撑点各 40 秒：效果数据怎么来的、成本怎么降的、下季度最大风险是什么和我的对策。背景和技术细节一概不主动讲，CEO 要问再展开。",
-      "human_score": 90, "confirmed": true
+      "human_score": 90,
+      "confirmed": true,
+      "llm_score": 85,
+      "diff": 5
     },
     {
-      "id": "N3", "dimension": "narrative", "tier": "中",
+      "id": "N3",
+      "dimension": "narrative",
+      "tier": "中",
       "question": "用 1 分钟向面试官讲清你做过的一个 AI 项目。请写出你的讲述提纲。",
       "answer": "结论先行，问题→决策→结果，重点讲决策和取舍，带量化。",
       "user_input": "先介绍项目背景，这个行业存在什么问题，然后讲我们的解决方案用了 RAG 和规则引擎，架构分为几层，最后讲效果是提效 9 倍。",
-      "human_score": 55, "confirmed": true
+      "human_score": 55,
+      "confirmed": true,
+      "llm_score": 55,
+      "diff": 0
     },
     {
-      "id": "N4", "dimension": "narrative", "tier": "中",
+      "id": "N4",
+      "dimension": "narrative",
+      "tier": "中",
       "question": "面试官问'你项目里最难的决策是什么'，怎样的回答结构最有效？",
       "answer": "给出具体决策点+两个候选方案的 tradeoff+为什么选了这个+结果验证。最忌只讲困难不讲决策，或只讲结论不讲放弃了什么。",
       "user_input": "我会讲一个具体的技术选型决策，说明当时有两个方案，我们选了其中一个，效果不错。",
-      "human_score": 50, "confirmed": true
+      "human_score": 50,
+      "confirmed": true,
+      "llm_score": 45,
+      "diff": 5
     },
     {
-      "id": "N5", "dimension": "narrative", "tier": "低",
+      "id": "N5",
+      "dimension": "narrative",
+      "tier": "低",
       "question": "向 CEO 汇报一个 AI 项目的季度进展，只有 3 分钟，你怎么组织内容？",
       "answer": "金字塔：结论先行，3 个并列论据，不从背景讲起。",
       "user_input": "我会做一个 PPT，把这个季度做的所有事情按时间顺序列出来，让 CEO 全面了解我们的工作量。",
-      "human_score": 28, "confirmed": true
+      "human_score": 28,
+      "confirmed": true,
+      "llm_score": 20,
+      "diff": 8
     },
     {
-      "id": "N6", "dimension": "narrative", "tier": "低",
+      "id": "N6",
+      "dimension": "narrative",
+      "tier": "低",
       "question": "面试官问'你项目里最难的决策是什么'，怎样的回答结构最有效？",
       "answer": "具体决策点+候选方案 tradeoff+选择理由+结果验证。",
       "user_input": "诚实回答就好，把心里想的说出来，态度真诚最重要。",
-      "human_score": 12, "confirmed": true
+      "human_score": 12,
+      "confirmed": true,
+      "llm_score": 20,
+      "diff": 8
     },
     {
-      "id": "W1", "dimension": "workflow", "tier": "高",
+      "id": "W1",
+      "dimension": "workflow",
+      "tier": "高",
       "question": "算法同学说'你这个需求没法做'，作为 AI PM 你检查自己的需求文档，最可能缺了什么？",
       "answer": "缺评测集和验收标准：PM 要定义什么算好（badcase 集、准确率/召回底线、验收样本），没有评测集算法无法交付也无法验收。这是 AI PM 与算法协作的关键交付物。",
       "user_input": "最可能缺评测集和验收标准。'做一个准确的审核功能'这种需求算法没法接——我需要给出：什么算对什么算错的判定标准、一批标注好的验收样本、准确率和召回的底线数字。评测集就是 AI 需求的验收合同，没有它交付和验收都无从谈起。",
-      "human_score": 92, "confirmed": true
+      "human_score": 92,
+      "confirmed": true,
+      "llm_score": 95,
+      "diff": 3
     },
     {
-      "id": "W2", "dimension": "workflow", "tier": "高",
+      "id": "W2",
+      "dimension": "workflow",
+      "tier": "高",
       "question": "AI 功能开发完成，工程说可以直接全量上线，你同意吗？",
       "answer": "不同意：AI 上线要灰度+回滚预案+持续评测。先小流量灰度观察核心指标（准确率、badcase 率），设定回滚条件，稳定后逐步放量；上线不是结束而是评测迭代循环的开始。",
       "user_input": "不同意直接全量。AI 功能的线上表现和测试集会有偏差，必须先灰度：小流量放 5%-10%，盯准确率和 badcase 率，提前定好回滚条件（比如漏检出现即回滚）。稳定一周再逐步放量。而且上线只是开始，badcase 回流和持续评测机制要同步跑起来。",
-      "human_score": 91, "confirmed": true
+      "human_score": 91,
+      "confirmed": true,
+      "llm_score": 88,
+      "diff": 3
     },
     {
-      "id": "W3", "dimension": "workflow", "tier": "中",
+      "id": "W3",
+      "dimension": "workflow",
+      "tier": "中",
       "question": "AI 项目和传统功能开发相比，推进节奏上最大的不同是什么？",
       "answer": "效果不确定性：先 PoC 小样本验证可行性再定方案，不能直接排开发；上线要灰度回滚；需要持续的数据标注、模型评测、迭代循环，不是交付即结束。",
       "user_input": "AI 项目效果不确定，所以要先做 PoC 验证可行性，不能像传统需求那样直接排期开发。",
-      "human_score": 62, "confirmed": true
+      "human_score": 62,
+      "confirmed": true,
+      "llm_score": 40,
+      "diff": 22
     },
     {
-      "id": "W4", "dimension": "workflow", "tier": "中",
+      "id": "W4",
+      "dimension": "workflow",
+      "tier": "中",
       "question": "上线后用户反馈'AI 有时候答得不对'，作为 PM 你的处理流程是什么？",
       "answer": "建 badcase 闭环：收集样本→归因分类（检索失败/prompt 失效/知识缺失/模型幻觉）→按类分派处置→修复后进回归测试集防复发→周期性复盘错误率趋势。",
       "user_input": "先把答错的案例收集起来，分析一下是什么原因导致的，然后让算法同学去修，修完验证一下。",
-      "human_score": 56, "confirmed": true
+      "human_score": 56,
+      "confirmed": true,
+      "llm_score": 65,
+      "diff": 9
     },
     {
-      "id": "W5", "dimension": "workflow", "tier": "低",
+      "id": "W5",
+      "dimension": "workflow",
+      "tier": "低",
       "question": "算法同学说'你这个需求没法做'，作为 AI PM 你检查自己的需求文档，最可能缺了什么？",
       "answer": "缺评测集和验收标准。",
       "user_input": "可能是我的需求写得不够详细，我会把 PRD 写得更详细一些，多开几次需求评审会对齐。",
-      "human_score": 30, "confirmed": true
+      "human_score": 30,
+      "confirmed": true,
+      "llm_score": null,
+      "diff": null
     },
     {
-      "id": "W6", "dimension": "workflow", "tier": "低",
+      "id": "W6",
+      "dimension": "workflow",
+      "tier": "低",
       "question": "AI 功能开发完成，工程说可以直接全量上线，你同意吗？",
       "answer": "不同意：要灰度+回滚+持续评测。",
       "user_input": "同意，开发测试都通过了就应该尽快上线，让用户早点用上新功能。",
-      "human_score": 15, "confirmed": true
+      "human_score": 15,
+      "confirmed": true,
+      "llm_score": 20,
+      "diff": 5
     },
     {
-      "id": "X1", "dimension": "ai-tech", "tier": "无关输入",
+      "id": "X1",
+      "dimension": "ai-tech",
+      "tier": "无关输入",
       "question": "RAG 系统答错了一个知识库里明明有的问题，可能的原因是什么？",
       "answer": "检索环节：切分、召回、排序问题。",
       "user_input": "啊啊啊啊今天天气不错哈哈哈 123123",
-      "human_score": 5, "confirmed": true
+      "human_score": 5,
+      "confirmed": true,
+      "llm_score": 10,
+      "diff": 5
     }
   ]
 }
