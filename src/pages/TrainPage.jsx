@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
 import { apiPost } from '../lib/api'
+import { retrieveChunks } from '../lib/rag'
 import { getDimension } from '../lib/dimensions'
 import styles from './TrainPage.module.css'
 
@@ -103,10 +104,13 @@ export default function TrainPage() {
   async function generateQuestions() {
     setLoadingQuestions(true)
     try {
+      // RAG：按维度从课件知识库随机采样知识点，作为出题依据（防幻觉 + 考点可溯源）
+      const chunks = dim ? await retrieveChunks(dim.key, { limit: 3 }) : []
       const res = await apiPost('generate-questions', {
         direction: dim ? `${dim.label}（覆盖：${dim.topics}）` : (DIRECTION_LABEL[direction] || direction),
         level,
         used_topics: usedTopics.current,
+        chunks,
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -154,6 +158,7 @@ export default function TrainPage() {
         question: currentQ.question,
         answer: currentQ.answer,
         user_input: userInput,
+        dimension: dim ? dim.key : null,
       })
       const data = await res.json()
       setFeedback(data.feedback)
@@ -412,6 +417,11 @@ export default function TrainPage() {
           <div className={styles.analysisBlock}>
             <h3 className={styles.analysisLabel}>参考答案</h3>
             <p className={styles.answerText}>{currentQ.answer}</p>
+            {currentQ.source && (
+              <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
+                考点来源：{currentQ.source}
+              </p>
+            )}
           </div>
 
           <div className={styles.analysisBlock}>

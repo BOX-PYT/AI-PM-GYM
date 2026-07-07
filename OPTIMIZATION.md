@@ -22,6 +22,8 @@
 
 ## P1 · 导师三问 = 求职素材（第 3-6 周，核心投入）
 
+> 2026-07-07 进度：1.1 ✅（211 条课件切块已灌库 + 检索注入出题 + 考点溯源）；1.2 ✅ 机制就绪（维度 rubric + 25 条校准集 + judge-calibration.mjs，待人工复核 human_score 后正式跑）；1.3 真题池按用户决定推迟。
+
 ### 1.1 RAG 进出题链路（回答"知识库怎么接"）
 现状：retrieveChunks 只用于首页建议；出题纯靠模型参数，知识库与题目零关联。
 - generate-questions 增加 `chunks` 入参：TrainPage 出题前按维度检索 top-3 注入 prompt，要求"题目必须考察 chunks 中的知识点，输出 source 字段标注依据"

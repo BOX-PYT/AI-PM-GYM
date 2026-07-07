@@ -77,5 +77,11 @@ export async function retrieveChunks(dimKey, { limit = 3 } = {}) {
 
   scored.sort((a, b) => b.score - a.score)
   const hits = scored.filter(x => x.score > 0)
-  return (hits.length ? hits : scored).slice(0, limit).map(x => x.content)
+  const pool = (hits.length ? hits : scored).slice(0, Math.max(limit * 4, 12))
+  // 从 top 池里随机采样：同一维度反复训练时，每轮基于不同知识点出题，避免题目重复
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[pool[i], pool[j]] = [pool[j], pool[i]]
+  }
+  return pool.slice(0, limit).map(x => x.content)
 }
