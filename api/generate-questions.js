@@ -83,7 +83,7 @@ export default async function handler(req, res) {
   const auth = await requireUserWithinLimit(req, res, 'generate-questions')
   if (!auth) return
 
-  const { direction, level, used_topics = [], chunks = [] } = req.body
+  const { direction, level, used_topics = [], chunks = [], jd = '' } = req.body
 
   if (!direction || !level) {
     return res.status(400).json({ error: 'Missing direction or level' })
@@ -93,10 +93,15 @@ export default async function handler(req, res) {
     ? `\n知识点素材（出题依据）：\n${chunks.map((c, i) => `${i + 1}. ${c}`).join('\n')}\n`
     : ''
 
+  // JD 定制：题目要贴合这份岗位的能力要求与业务场景，考察候选人能否胜任
+  const jdBlock = jd && jd.trim()
+    ? `\n目标岗位 JD（题目必须紧扣这份 JD 的能力要求、业务场景与技术栈，模拟该岗位真实会遇到的判断题；source 字段填对应的 JD 要求点）：\n${jd.trim().slice(0, 2000)}\n`
+    : ''
+
   const userPrompt = `训练方向：${direction}
 难度等级：${level}
 已出过的关键词：${used_topics.join('、') || '（无）'}
-${material}
+${material}${jdBlock}
 请生成 5 道训练题。`
 
   try {

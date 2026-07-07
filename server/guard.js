@@ -2,9 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 
 // 每用户每日调用上限。真实用户一天 4 轮训练也用不完；挡的是脚本刷 key。
 const DAILY_LIMITS = {
-  'generate-questions': 20,
+  'generate-questions': 25,
   'get-feedback': 80,
   'followup': 30,
+  'interviewer': 40,
   'suggest': 20,
   'restore-account': 10,
 }

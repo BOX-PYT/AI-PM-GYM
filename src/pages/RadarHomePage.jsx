@@ -210,6 +210,19 @@ export default function RadarHomePage() {
           ))}
         </div>
 
+        {/* JD 定制训练入口 */}
+        <button className={styles.dimRow} onClick={() => navigate('/jd')} style={{ marginTop: 4 }}>
+          <span className={styles.stripe} style={{ background: '#ec4899' }} />
+          <div className={styles.dimText}>
+            <span className={styles.dimName}>
+              JD 定制训练
+              <span className={styles.dimLevel} style={{ color: '#ec4899' }}>NEW</span>
+            </span>
+            <span className={styles.dimWhy}>粘贴目标岗位 JD，练贴合这个岗位的题</span>
+          </div>
+          <span className={styles.dimChevron}>{Icons.chevronRight}</span>
+        </button>
+
         <button className={styles.restoreToggle} onClick={() => setShowRestore(v => !v)}>
           {showRestore ? '取消' : '换设备？输入恢复码找回'}
         </button>

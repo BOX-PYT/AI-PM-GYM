@@ -13,6 +13,7 @@ const DIRECTION_LABEL = {
   tech: '技术理解力',
   expression: '结构化表达',
   insight: '行业洞察',
+  jd: 'JD 定制训练',
 }
 
 const LEVEL_COLOR = {
@@ -29,6 +30,7 @@ export default function TrainPage() {
   const navigate = useNavigate()
   const { user } = useUser()
   const level = state?.level || '进阶'
+  const jd = state?.jd || '' // JD 定制训练：粘贴的岗位描述，出题时贴合它
 
   const dim = getDimension(direction)
   const dirLabel = dim ? dim.label : (DIRECTION_LABEL[direction] || direction)
@@ -44,6 +46,14 @@ export default function TrainPage() {
   const [followUpQ, setFollowUpQ] = useState('')
   const [followUpA, setFollowUpA] = useState('')
   const [followUpLoading, setFollowUpLoading] = useState(false)
+  // 面试官追问模式：AI 基于用户作答反向追问 2 轮
+  const [ivRounds, setIvRounds] = useState([]) // [{challenge, reply, verdict}]
+  const [ivChallenge, setIvChallenge] = useState('') // 当前待回答的追问
+  const [ivReply, setIvReply] = useState('')
+  const [ivActive, setIvActive] = useState(false)
+  const [ivLoading, setIvLoading] = useState(false)
+  const [ivDone, setIvDone] = useState(false)
+  const [ivSummary, setIvSummary] = useState('')
   const [isConquer, setIsConquer] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [loadingQuestions, setLoadingQuestions] = useState(true)
@@ -111,6 +121,7 @@ export default function TrainPage() {
         level,
         used_topics: usedTopics.current,
         chunks,
+        jd,
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -198,6 +209,59 @@ export default function TrainPage() {
     }
   }
 
+  async function startInterviewer() {
+    if (!currentQ) return
+    setIvActive(true)
+    setIvLoading(true)
+    try {
+      const res = await apiPost('interviewer', {
+        question: currentQ.question,
+        answer: currentQ.answer,
+        user_input: userInput,
+        history: [],
+      })
+      const data = await res.json()
+      setIvChallenge(data.challenge || '')
+      if (data.done) { setIvDone(true); setIvSummary(data.verdict || '') }
+    } catch {
+      setIvChallenge('面试官暂时走神了，稍后再试。')
+    } finally {
+      setIvLoading(false)
+    }
+  }
+
+  async function submitIvReply() {
+    if (!ivReply.trim() || ivLoading || !currentQ) return
+    const reply = ivReply.trim()
+    const history = ivRounds.map(r => ({ challenge: r.challenge, reply: r.reply }))
+    history.push({ challenge: ivChallenge, reply })
+    setIvLoading(true)
+    try {
+      const res = await apiPost('interviewer', {
+        question: currentQ.question,
+        answer: currentQ.answer,
+        user_input: userInput,
+        history,
+      })
+      const data = await res.json()
+      if (data.done) {
+        // 收尾轮：本轮不单列点评，verdict 作为整场总评
+        setIvRounds(prev => [...prev, { challenge: ivChallenge, reply, verdict: '' }])
+        setIvDone(true)
+        setIvSummary(data.verdict || '')
+        setIvChallenge('')
+      } else {
+        setIvRounds(prev => [...prev, { challenge: ivChallenge, reply, verdict: data.verdict || '' }])
+        setIvChallenge(data.challenge || '')
+      }
+      setIvReply('')
+    } catch {
+      // 保持当前追问，用户可重试
+    } finally {
+      setIvLoading(false)
+    }
+  }
+
   async function handleNext() {
     // 保存当前记录
     setSaveError('')
@@ -255,6 +319,12 @@ export default function TrainPage() {
       setFollowUpInput('')
       setFollowUpQ('')
       setFollowUpA('')
+      setIvRounds([])
+      setIvChallenge('')
+      setIvReply('')
+      setIvActive(false)
+      setIvDone(false)
+      setIvSummary('')
     } else {
       // 5 题完成，原子自增 total_completed（数据库函数，避免先取再写的竞态），跳转回顾页
       if (user) {
@@ -476,6 +546,55 @@ export default function TrainPage() {
               </div>
             )}
           </div>
+
+          {/* 面试官追问模式：模拟压力面，基于作答反向深挖 */}
+          {!feedbackLoading && (
+            <div className={styles.analysisBlock}>
+              <h3 className={styles.analysisLabel}>面试官追问（模拟压力面）</h3>
+              {ivRounds.map((r, i) => (
+                <div key={i} style={{ marginBottom: 8, fontSize: 13, lineHeight: 1.6 }}>
+                  <p style={{ fontWeight: 600, margin: '0 0 2px' }}>追问 {i + 1}：{r.challenge}</p>
+                  <p style={{ color: 'var(--text-muted)', margin: '0 0 2px' }}>你：{r.reply}</p>
+                  {r.verdict && <p style={{ color: 'var(--accent)', margin: 0 }}>点评：{r.verdict}</p>}
+                </div>
+              ))}
+
+              {!ivActive && (
+                <button className={styles.conquerBtn} onClick={startInterviewer} disabled={ivLoading}>
+                  🎤 让面试官追问我
+                </button>
+              )}
+
+              {ivActive && !ivDone && ivChallenge && (
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, margin: '4px 0' }}>追问 {ivRounds.length + 1}：{ivChallenge}</p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <textarea
+                      className={styles.textarea}
+                      style={{ minHeight: 40, flex: 1 }}
+                      placeholder="回答面试官的追问"
+                      value={ivReply}
+                      onChange={e => setIvReply(e.target.value)}
+                      disabled={ivLoading}
+                    />
+                    <button className={styles.ctaBtn} onClick={submitIvReply} disabled={!ivReply.trim() || ivLoading}>
+                      {ivLoading ? '...' : '回答'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {ivActive && ivLoading && !ivChallenge && !ivDone && (
+                <p className={styles.loadingText}>面试官思考中...</p>
+              )}
+
+              {ivDone && ivSummary && (
+                <p style={{ fontSize: 13, color: 'var(--accent)', marginTop: 4, lineHeight: 1.6 }}>
+                  面试官总评：{ivSummary}
+                </p>
+              )}
+            </div>
+          )}
 
           {saveError && (
             <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--accent)', lineHeight: 1.6 }}>

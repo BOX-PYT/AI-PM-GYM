@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
 import RadarHomePage from './pages/RadarHomePage'
 import DimensionPage from './pages/DimensionPage'
 import TrainEntryPage from './pages/TrainEntryPage'
+import JdEntryPage from './pages/JdEntryPage'
 import TrainPage from './pages/TrainPage'
 import ReviewPage from './pages/ReviewPage'
 import StatsPage from './pages/StatsPage'
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/" element={<><RadarHomePage /><BottomNav /></>} />
         <Route path="/dimension/:key" element={<DimensionPage />} />
         <Route path="/train/:direction" element={<TrainEntryPage />} />
+        <Route path="/jd" element={<JdEntryPage />} />
         <Route path="/train/:direction/session" element={<TrainPage />} />
         <Route path="/review" element={<ReviewPage />} />
         <Route path="/stats" element={<><StatsPage /><BottomNav /></>} />
