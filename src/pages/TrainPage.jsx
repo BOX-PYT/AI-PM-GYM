@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
+import { apiPost } from '../lib/api'
 import { getDimension } from '../lib/dimensions'
 import styles from './TrainPage.module.css'
 
@@ -102,16 +103,15 @@ export default function TrainPage() {
   async function generateQuestions() {
     setLoadingQuestions(true)
     try {
-      const res = await fetch('/api/generate-questions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          direction: dim ? `${dim.label}（覆盖：${dim.topics}）` : (DIRECTION_LABEL[direction] || direction),
-          level,
-          used_topics: usedTopics.current,
-        }),
+      const res = await apiPost('generate-questions', {
+        direction: dim ? `${dim.label}（覆盖：${dim.topics}）` : (DIRECTION_LABEL[direction] || direction),
+        level,
+        used_topics: usedTopics.current,
       })
-      if (!res.ok) throw new Error('生成题目失败')
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || '生成题目失败')
+      }
       const data = await res.json()
       setQuestions(data.questions)
       data.questions.forEach(q => {
@@ -150,14 +150,10 @@ export default function TrainPage() {
     setFeedbackLoading(true)
     setShowAnalysis(true)
     try {
-      const res = await fetch('/api/get-feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: currentQ.question,
-          answer: currentQ.answer,
-          user_input: userInput,
-        }),
+      const res = await apiPost('get-feedback', {
+        question: currentQ.question,
+        answer: currentQ.answer,
+        user_input: userInput,
       })
       const data = await res.json()
       setFeedback(data.feedback)
@@ -179,16 +175,12 @@ export default function TrainPage() {
     const q = followUpInput.trim()
     setFollowUpLoading(true)
     try {
-      const res = await fetch('/api/followup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: currentQ.question,
-          answer: currentQ.answer,
-          user_input: userInput,
-          ai_feedback: feedback,
-          follow_up_question: q,
-        }),
+      const res = await apiPost('followup', {
+        question: currentQ.question,
+        answer: currentQ.answer,
+        user_input: userInput,
+        ai_feedback: feedback,
+        follow_up_question: q,
       })
       const data = await res.json()
       setFollowUpQ(q)
@@ -259,24 +251,10 @@ export default function TrainPage() {
       setFollowUpQ('')
       setFollowUpA('')
     } else {
-      // 5 题完成，更新 total_completed，跳转回顾页
+      // 5 题完成，原子自增 total_completed（数据库函数，避免先取再写的竞态），跳转回顾页
       if (user) {
-        await supabase
-          .from('users')
-          .update({ total_completed: supabase.rpc ? undefined : undefined }) // 用 rpc increment
-          .eq('id', user.id)
-        // 简单自增：先取再加
-        const { data } = await supabase
-          .from('users')
-          .select('total_completed')
-          .eq('id', user.id)
-          .single()
-        if (data) {
-          await supabase
-            .from('users')
-            .update({ total_completed: (data.total_completed || 0) + 1 })
-            .eq('id', user.id)
-        }
+        const { error: incErr } = await supabase.rpc('increment_completed', { p_user_id: user.id })
+        if (incErr) console.error('更新完成计数失败', incErr)
       }
       navigate('/review', {
         state: {

@@ -1,3 +1,5 @@
+import { requireUserWithinLimit } from '../server/guard.js'
+
 const SYSTEM_PROMPT = `你是 AI PM GYM 的训练教练，对用户作答给出简短点评和结构化评分。
 
 要求：
@@ -33,6 +35,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const auth = await requireUserWithinLimit(req, res, 'get-feedback')
+  if (!auth) return
 
   const { question, answer, user_input } = req.body
 

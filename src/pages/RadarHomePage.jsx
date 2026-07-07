@@ -4,6 +4,7 @@ import { useUser } from '../hooks/useUser'
 import { supabase } from '../lib/supabase'
 import { DIMENSIONS, computeDimensionLevels } from '../lib/dimensions'
 import { retrieveChunks } from '../lib/rag'
+import { apiPost } from '../lib/api'
 import { Icons } from '../lib/icons'
 import styles from './RadarHomePage.module.css'
 
@@ -48,11 +49,7 @@ export default function RadarHomePage() {
     try {
       const chunks = await retrieveChunks(dim.key, { limit: 3 })
       setRetrieved(chunks)
-      const res = await fetch('/api/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dimension_label: dim.label, chunks }),
-      })
+      const res = await apiPost('suggest', { dimension_label: dim.label, chunks })
       if (!res.ok) throw new Error('suggest api unavailable')
       const data = await res.json()
       setSuggestion(data.suggestion)

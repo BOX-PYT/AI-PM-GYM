@@ -101,3 +101,26 @@ create policy "public read" on course_chunks for select to authenticated, anon
 -- 迁移期兼容：旧的匿名会话（auth_uid 为空）在完成一次登录前无法通过新策略，
 -- 前端 userId.js 已改为在 getOrCreateUser 里对每个浏览器做一次 signInAnonymously()
 -- 并回填 auth_uid，属于一次性迁移，无需手动处理历史行。
+
+-- ── P0 安全加固（2026-07）：API 每日限额表 + 完成数原子自增 ──
+
+-- 每次 /api/* 调用记一行，服务端 guard 按 (auth_uid, endpoint, 当日) 计数限额。
+-- 只有 service_role 读写（开 RLS 且不建任何策略），客户端无法伪造。
+create table if not exists api_usage (
+  id bigint generated always as identity primary key,
+  auth_uid uuid not null,
+  endpoint text not null,
+  created_at timestamptz default now()
+);
+create index if not exists api_usage_lookup on api_usage (auth_uid, endpoint, created_at);
+alter table api_usage enable row level security;
+
+-- 完成一轮训练后原子自增，替代前端"先取再写"（有并发丢失更新的竞态）。
+-- security invoker：RLS 仍生效，用户只能加自己那一行（受 users 的 update own 策略约束）。
+create or replace function increment_completed(p_user_id uuid)
+returns void
+language sql
+security invoker
+as $$
+  update users set total_completed = coalesce(total_completed, 0) + 1 where id = p_user_id;
+$$;

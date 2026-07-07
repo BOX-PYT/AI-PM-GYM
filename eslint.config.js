@@ -18,4 +18,11 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  // 服务端代码（Vercel serverless）跑在 Node 环境
+  {
+    files: ['api/**/*.js', 'server/**/*.js', 'scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])

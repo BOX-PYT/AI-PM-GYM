@@ -1,36 +1,22 @@
-import { createClient } from '@supabase/supabase-js'
 import { randomBytes } from 'node:crypto'
-
-// service_role key 只能在服务端用，绝不能出现在前端 bundle 里。
-// 用它做两件普通 anon key 做不到的事：验证任意用户的 access token、
-// 绕过 RLS 按恢复码查到目标账号并重新绑定 auth_uid。
-function adminClient() {
-  return createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
-}
+import { requireUserWithinLimit } from '../server/guard.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const authHeader = req.headers.authorization || ''
-  const token = authHeader.replace(/^Bearer\s+/i, '')
-  const { recovery_code } = req.body
+  // guard 负责：验证 token 真实有效（不信任客户端传 uid）+ 每日限次防恢复码爆破
+  const auth = await requireUserWithinLimit(req, res, 'restore-account')
+  if (!auth) return
+  const { authUid: newAuthUid, admin } = auth
 
-  if (!token || !recovery_code) {
-    return res.status(400).json({ error: 'Missing token or recovery_code' })
+  const { recovery_code } = req.body
+  if (!recovery_code) {
+    return res.status(400).json({ error: 'Missing recovery_code' })
   }
 
   try {
-    const admin = adminClient()
-
-    // 用 service_role 验证这个 token 真实有效，拿到调用方自己的 auth_uid，
-    // 不信任客户端直接传一个 uid 过来。
-    const { data: authData, error: authErr } = await admin.auth.getUser(token)
-    if (authErr || !authData?.user) {
-      return res.status(401).json({ error: 'Invalid session' })
-    }
-    const newAuthUid = authData.user.id
 
     const { data: target, error: findErr } = await admin
       .from('users')

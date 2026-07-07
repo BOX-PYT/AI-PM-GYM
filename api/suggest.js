@@ -1,3 +1,5 @@
+import { requireUserWithinLimit } from '../server/guard.js'
+
 const SYSTEM_PROMPT = `你是一位资深 AI PM，在给转型者做一对一指导。系统会提供一批背景知识供你参考。
 
 要求：
@@ -14,6 +16,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const auth = await requireUserWithinLimit(req, res, 'suggest')
+  if (!auth) return
 
   const { dimension_label, chunks = [] } = req.body
   if (!dimension_label) {
