@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { DIMENSIONS, computeDimensionLevels } from '../lib/dimensions'
 import { retrieveChunks } from '../lib/rag'
 import { apiPost } from '../lib/api'
+import { createShareCardDataURL } from '../lib/shareCard'
 import { Icons } from '../lib/icons'
 import styles from './RadarHomePage.module.css'
 
@@ -26,6 +27,19 @@ function pickWeakestDim(levels) {
   return tied[Math.floor(Math.random() * tied.length)]
 }
 
+// 连续训练天数：从今天（或昨天，若今天没练）往前数连续有记录的天数
+function computeStreak(records) {
+  const key = d => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  const days = new Set((records || []).map(r => key(new Date(r.created_at))))
+  const today = new Date()
+  const todayDone = days.has(key(today))
+  const cursor = new Date()
+  if (!todayDone) cursor.setDate(cursor.getDate() - 1) // 今天没练不算断，从昨天起数
+  let streak = 0
+  while (days.has(key(cursor))) { streak++; cursor.setDate(cursor.getDate() - 1) }
+  return { streak, todayDone }
+}
+
 export default function RadarHomePage() {
   const navigate = useNavigate()
   const { user, loading, error: userError } = useUser()
@@ -39,6 +53,9 @@ export default function RadarHomePage() {
   const [suggestion, setSuggestion] = useState('')
   const [retrieved, setRetrieved] = useState([])
   const [activeDim, setActiveDim] = useState(() => pickWeakestDim(levels))
+  const [shareUrl, setShareUrl] = useState('')
+  const [streak, setStreak] = useState(0)
+  const [todayDone, setTodayDone] = useState(false)
 
   async function handleSuggest() {
     setSuggestLoading(true)
@@ -72,6 +89,9 @@ export default function RadarHomePage() {
       const computed = computeDimensionLevels(data || [])
       setLevels(computed)
       setActiveDim(pickWeakestDim(computed)) // 真实数据到位后重新挑一次最薄弱维度
+      const s = computeStreak(data || [])
+      setStreak(s.streak)
+      setTodayDone(s.todayDone)
     })()
     return () => { cancelled = true }
   }, [user])
@@ -102,6 +122,12 @@ export default function RadarHomePage() {
     }
   }
 
+  const hasData = DIMENSIONS.some(d => (levels[d.key] || 0) > 0)
+
+  function handleShare() {
+    setShareUrl(createShareCardDataURL(levels, user?.anonymousId || ''))
+  }
+
   const dataPolygon = DIMENSIONS
     .map((d, i) => axisPoint(i, Math.max(0.04, (levels[d.key] || 0) / 100)).join(','))
     .join(' ')
@@ -126,6 +152,18 @@ export default function RadarHomePage() {
           </div>
         </div>
         <p className={styles.tagline}>你的 AI 产品经理能力，随练习实时生长</p>
+        {streak > 0 && (
+          <button
+            onClick={() => navigate('/train/comprehensive/session', { state: { level: '进阶' } })}
+            style={{
+              marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '5px 12px', borderRadius: 999, border: '1px solid var(--border)',
+              background: 'transparent', color: 'var(--text)', fontSize: 13, cursor: 'pointer',
+            }}
+          >
+            🔥 连续 {streak} 天 · {todayDone ? '今天已练' : '今天来一题 →'}
+          </button>
+        )}
       </header>
 
       {userError && (
@@ -135,6 +173,22 @@ export default function RadarHomePage() {
       )}
 
       <div className={styles.body}>
+        {/* 新用户摸底引导（无数据时） */}
+        {!hasData && (
+          <div className={styles.suggestCard}>
+            <div className={styles.suggestHead}>
+              <span className={styles.suggestLabel}>新手引导</span>
+            </div>
+            <p className={styles.suggestText}>还没有能力数据。花 2 分钟做个摸底，先测出你的 AI PM 能力画像，再看该补哪一维。</p>
+            <button
+              className={styles.suggestBtn}
+              onClick={() => { localStorage.setItem('aipk_onboarded', '1'); navigate('/train/comprehensive/session', { state: { level: '入门' } }) }}
+            >
+              开始 2 分钟摸底测
+            </button>
+          </div>
+        )}
+
         {/* 能力雷达图 */}
         <div className={styles.radarWrap}>
           <svg viewBox="0 0 280 280" className={styles.radar}>
@@ -192,6 +246,34 @@ export default function RadarHomePage() {
             {suggestLoading ? '生成中...' : suggestion || retrieved.length ? '换一条建议' : '生成下一步建议'}
           </button>
         </div>
+
+        {/* 能力体检分享卡（有数据时） */}
+        {hasData && (
+          <div className={styles.suggestCard}>
+            <div className={styles.suggestHead}>
+              <span className={styles.suggestLabel}>能力体检卡</span>
+            </div>
+            {shareUrl ? (
+              <>
+                <img src={shareUrl} alt="能力卡片" style={{ width: '100%', borderRadius: 8, display: 'block', marginBottom: 8 }} />
+                <p className={styles.suggestHint}>长按图片保存到相册，或点下方下载</p>
+                <a
+                  className={styles.suggestBtn}
+                  href={shareUrl}
+                  download="ai-pm-能力卡片.png"
+                  style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}
+                >
+                  下载卡片
+                </a>
+              </>
+            ) : (
+              <>
+                <p className={styles.suggestHint}>生成一张能力雷达卡片，晒进度、发小红书。</p>
+                <button className={styles.suggestBtn} onClick={handleShare}>生成能力卡片</button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* 4 维度入口 */}
         <div className={styles.dimList}>

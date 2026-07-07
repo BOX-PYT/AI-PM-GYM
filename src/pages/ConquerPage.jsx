@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { DIMENSIONS, resolveRecordDimension } from '../lib/dimensions'
 import styles from './ConquerPage.module.css'
 
+const REVIEW_MS = 3 * 24 * 60 * 60 * 1000 // 待攻克题超过 3 天算"该复习"
+
 export default function ConquerPage() {
   const { user, loading: userLoading } = useUser()
   const navigate = useNavigate()
@@ -43,8 +45,15 @@ export default function ConquerPage() {
     setRecords(prev => prev.filter(r => r.id !== recordId))
   }
 
+  // 间隔重复：标记超过 3 天未复习的待攻克题，排到最前。
+  // now 用 useState 懒初始化在挂载时定一次，render 期不调 Date.now
+  const [now] = useState(() => Date.now())
+  const isDue = r => now - new Date(r.created_at).getTime() >= REVIEW_MS
+  const dueCount = records.filter(isDue).length
+
   const filters = ['全部', ...DIMENSIONS.map(d => d.key)]
-  const filtered = filter === '全部' ? records : records.filter(r => r.dimKey === filter)
+  const filteredBase = filter === '全部' ? records : records.filter(r => r.dimKey === filter)
+  const filtered = [...filteredBase].sort((a, b) => (isDue(b) ? 1 : 0) - (isDue(a) ? 1 : 0))
 
   function dimLabel(key) {
     return DIMENSIONS.find(d => d.key === key)?.label || key
@@ -74,7 +83,9 @@ export default function ConquerPage() {
           <div>
             <h1 className={styles.title}>待攻克</h1>
             <p className={styles.subtitle}>
-              {records.length > 0 ? `${records.length} 道题待练` : '暂无标记题目'}
+              {records.length > 0
+                ? `${records.length} 道题待练${dueCount > 0 ? ` · ${dueCount} 道该复习了` : ''}`
+                : '暂无标记题目'}
             </p>
           </div>
           {records.length > 0 && (
@@ -117,7 +128,10 @@ export default function ConquerPage() {
                     <span className="badge" style={{ background: 'var(--accent-dim)', color: dimColor(r.dimKey) || 'var(--accent)' }}>
                       {r.dimKey ? dimLabel(r.dimKey) : r.direction}
                     </span>
-                    <span className={styles.date}>{formatDate(r.created_at)}</span>
+                    <span className={styles.date}>
+                      {isDue(r) && <span style={{ color: '#ec4899', fontWeight: 600, marginRight: 6 }}>该复习</span>}
+                      {formatDate(r.created_at)}
+                    </span>
                   </div>
                   <p className={styles.question}>{r.question}</p>
                   <div className={styles.cardActions}>
