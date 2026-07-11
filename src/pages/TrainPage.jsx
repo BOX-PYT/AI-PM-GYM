@@ -16,13 +16,22 @@ const DIRECTION_LABEL = {
   jd: 'JD 定制训练',
 }
 
-const LEVEL_COLOR = {
-  入门: '#4ade80',
-  进阶: '#f6ad55',
-  挑战: '#fc8181',
-}
-
 const MIN_CHARS = 20
+
+function MicIcon({ recording }) {
+  return recording ? (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="6" y="6" width="12" height="12" />
+    </svg>
+  ) : (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+      <line x1="12" y1="19" x2="12" y2="22"/>
+      <line x1="9" y1="22" x2="15" y2="22"/>
+    </svg>
+  )
+}
 
 export default function TrainPage() {
   const { direction } = useParams()
@@ -31,6 +40,7 @@ export default function TrainPage() {
   const { user } = useUser()
   const level = state?.level || '进阶'
   const jd = state?.jd || '' // JD 定制训练：粘贴的岗位描述，出题时贴合它
+  const isPlacement = !!state?.isPlacement // 新手摸底测：完成后回顾页展示评估结果
 
   const dim = getDimension(direction)
   const dirLabel = dim ? dim.label : (DIRECTION_LABEL[direction] || direction)
@@ -59,7 +69,9 @@ export default function TrainPage() {
   const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [sessionRecords, setSessionRecords] = useState([])
   const [sessionId, setSessionId] = useState(null)
-  const [recordingTarget, setRecordingTarget] = useState(null) // null | 'answer' | 'followup'
+  const [recordingTarget, setRecordingTarget] = useState(null) // null | 'answer' | 'followup' | 'ivreply'
+  const [sourceChunks, setSourceChunks] = useState([]) // 本轮出题采样的知识点原文，供考点溯源展开查看
+  const [showSource, setShowSource] = useState(false)
   const usedTopics = useRef([])
   const recognitionRef = useRef(null)
 
@@ -69,13 +81,6 @@ export default function TrainPage() {
   useEffect(() => {
     return () => recognitionRef.current?.stop()
   }, [])
-
-  useEffect(() => {
-    if (showAnalysis && recordingTarget === 'answer') {
-      recognitionRef.current?.stop()
-      setRecordingTarget(null)
-    }
-  }, [showAnalysis])
 
   // target: 'answer' | 'followup'，setter 是对应文本框的 setState
   function toggleVoice(target, setter) {
@@ -106,38 +111,40 @@ export default function TrainPage() {
     setRecordingTarget(target)
   }
 
-  // 预生成 5 题
+  // 预生成 5 题。所有 setState 都在首个 await 之后（loadingQuestions 初始即为 true）
   useEffect(() => {
-    generateQuestions()
-  }, [])
-
-  async function generateQuestions() {
-    setLoadingQuestions(true)
-    try {
-      // RAG：按维度从课件知识库随机采样知识点，作为出题依据（防幻觉 + 考点可溯源）
-      const chunks = dim ? await retrieveChunks(dim.key, { limit: 3 }) : []
-      const res = await apiPost('generate-questions', {
-        direction: dim ? `${dim.label}（覆盖：${dim.topics}）` : (DIRECTION_LABEL[direction] || direction),
-        level,
-        used_topics: usedTopics.current,
-        chunks,
-        jd,
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || '生成题目失败')
+    let cancelled = false
+    ;(async () => {
+      try {
+        // RAG：按维度从课件知识库随机采样知识点，作为出题依据（防幻觉 + 考点可溯源）
+        const chunks = await (dim ? retrieveChunks(dim.key, { limit: 3 }) : Promise.resolve([]))
+        if (cancelled) return
+        if (chunks.length) setSourceChunks(chunks)
+        const res = await apiPost('generate-questions', {
+          direction: dim ? `${dim.label}（覆盖：${dim.topics}）` : (DIRECTION_LABEL[direction] || direction),
+          level,
+          used_topics: usedTopics.current,
+          chunks,
+          jd,
+        })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.error || '生成题目失败')
+        }
+        const data = await res.json()
+        if (cancelled) return
+        setQuestions(data.questions)
+        data.questions.forEach(q => {
+          if (q.topic_keyword) usedTopics.current.push(q.topic_keyword)
+        })
+      } catch (e) {
+        console.error(e)
+      } finally {
+        if (!cancelled) setLoadingQuestions(false)
       }
-      const data = await res.json()
-      setQuestions(data.questions)
-      data.questions.forEach(q => {
-        if (q.topic_keyword) usedTopics.current.push(q.topic_keyword)
-      })
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoadingQuestions(false)
-    }
-  }
+    })()
+    return () => { cancelled = true }
+  }, [])
 
   // 创建 session（第一次回答时）
   async function ensureSession() {
@@ -160,8 +167,18 @@ export default function TrainPage() {
   const charCount = userInput.length
   const unlocked = charCount >= MIN_CHARS
 
+  // 分析视图里底部统一语音入口的目标输入框：优先面试官追问回复框，其次概念追问框（已用掉则无目标）
+  const analysisVoice = ivActive && !ivDone && ivChallenge
+    ? { target: 'ivreply', setter: setIvReply, hint: '语音回答面试官追问' }
+    : (!followUpQ ? { target: 'followup', setter: setFollowUpInput, hint: '语音输入追问' } : null)
+
   async function handleViewAnalysis() {
     if (!unlocked || !currentQ) return
+    if (recordingTarget === 'answer') {
+      // 进入分析视图后回答框即隐藏，先停掉还在跑的语音识别
+      recognitionRef.current?.stop()
+      setRecordingTarget(null)
+    }
     setFeedbackLoading(true)
     setShowAnalysis(true)
     try {
@@ -188,6 +205,8 @@ export default function TrainPage() {
 
   async function handleAskFollowUp() {
     if (!followUpInput.trim() || followUpQ || !currentQ) return
+    recognitionRef.current?.stop() // 提交后输入框会锁定，停掉还在跑的语音识别
+    setRecordingTarget(null)
     const q = followUpInput.trim()
     setFollowUpLoading(true)
     try {
@@ -232,6 +251,8 @@ export default function TrainPage() {
 
   async function submitIvReply() {
     if (!ivReply.trim() || ivLoading || !currentQ) return
+    recognitionRef.current?.stop() // 提交即清空回复框，避免识别结果落进下一轮
+    setRecordingTarget(null)
     const reply = ivReply.trim()
     const history = ivRounds.map(r => ({ challenge: r.challenge, reply: r.reply }))
     history.push({ challenge: ivChallenge, reply })
@@ -313,6 +334,7 @@ export default function TrainPage() {
       setCurrentIdx(i => i + 1)
       setUserInput('')
       setShowAnalysis(false)
+      setShowSource(false)
       setFeedback('')
       setFeedbackDetail({ score: null, hit_points: [], missed: [] })
       setIsConquer(false)
@@ -341,6 +363,8 @@ export default function TrainPage() {
             direction: dirLabel,
             dimension: dim ? dim.key : null,
             score: feedbackDetail.score,
+            hit_points: feedbackDetail.hit_points,
+            missed: feedbackDetail.missed,
             follow_up_q: followUpQ || null,
             follow_up_a: followUpA || null,
             level,
@@ -348,6 +372,7 @@ export default function TrainPage() {
           }],
           direction: dirLabel,
           level,
+          isPlacement,
         },
       })
     }
@@ -417,28 +442,8 @@ export default function TrainPage() {
           <div className={`${styles.charBar} ${unlocked ? styles.charBarDone : ''}`}>
             <div className={styles.charFill} style={{ width: `${Math.min(charCount / MIN_CHARS * 100, 100)}%` }} />
           </div>
-          {/* footer: mic | 字数提示 | 查看分析 */}
+          {/* footer: 字数提示 | 查看分析 | mic —— 语音入口统一放在底部最右 */}
           <div className={styles.inputFooter}>
-            {voiceSupported && (
-              <button
-                className={`${styles.voiceBtn} ${recordingTarget === 'answer' ? styles.voiceBtnActive : ''}`}
-                onClick={() => toggleVoice('answer', setUserInput)}
-                title={recordingTarget === 'answer' ? '停止录音' : '语音输入'}
-              >
-                {recordingTarget === 'answer' ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="6" y="6" width="12" height="12" />
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                    <line x1="12" y1="19" x2="12" y2="22"/>
-                    <line x1="9" y1="22" x2="15" y2="22"/>
-                  </svg>
-                )}
-              </button>
-            )}
             <span className={styles.charCount}>
               {charCount < MIN_CHARS ? `还需 ${MIN_CHARS - charCount} 字` : '✓'}
             </span>
@@ -449,6 +454,15 @@ export default function TrainPage() {
             >
               查看分析 →
             </button>
+            {voiceSupported && (
+              <button
+                className={`${styles.voiceBtn} ${recordingTarget === 'answer' ? styles.voiceBtnActive : ''}`}
+                onClick={() => toggleVoice('answer', setUserInput)}
+                title={recordingTarget === 'answer' ? '停止录音' : '语音输入'}
+              >
+                <MicIcon recording={recordingTarget === 'answer'} />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -488,9 +502,32 @@ export default function TrainPage() {
             <h3 className={styles.analysisLabel}>参考答案</h3>
             <p className={styles.answerText}>{currentQ.answer}</p>
             {currentQ.source && (
-              <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
-                考点来源：{currentQ.source}
-              </p>
+              <div style={{ marginTop: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowSource(v => !v)}
+                  style={{
+                    background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+                    fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font)', textAlign: 'left',
+                  }}
+                >
+                  考点来源：{currentQ.source}
+                  <span style={{ color: 'var(--accent)', marginLeft: 6 }}>
+                    {showSource ? '收起原文 ▾' : '查看原文 ▸'}
+                  </span>
+                </button>
+                {showSource && (
+                  <p style={{
+                    margin: '6px 0 0', padding: '8px 10px', border: '1px solid var(--border-solid)',
+                    fontSize: 12, lineHeight: 1.7, color: 'var(--text-muted)', whiteSpace: 'pre-wrap',
+                  }}>
+                    {sourceChunks.find(c => c.includes(currentQ.source))
+                      || (jd
+                        ? '本题依据你粘贴的目标岗位 JD 出题，来源点为 JD 中的该项能力要求。'
+                        : '本题基于本轮采样的知识点综合出题，未能定位到单条原文。')}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -515,27 +552,6 @@ export default function TrainPage() {
                   onChange={e => setFollowUpInput(e.target.value)}
                   disabled={followUpLoading}
                 />
-                {voiceSupported && (
-                  <button
-                    className={`${styles.voiceBtn} ${recordingTarget === 'followup' ? styles.voiceBtnActive : ''}`}
-                    onClick={() => toggleVoice('followup', setFollowUpInput)}
-                    title={recordingTarget === 'followup' ? '停止录音' : '语音输入'}
-                    type="button"
-                  >
-                    {recordingTarget === 'followup' ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="6" y="6" width="12" height="12" />
-                      </svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                        <line x1="12" y1="19" x2="12" y2="22"/>
-                        <line x1="9" y1="22" x2="15" y2="22"/>
-                      </svg>
-                    )}
-                  </button>
-                )}
                 <button
                   className={styles.ctaBtn}
                   onClick={handleAskFollowUp}
@@ -616,6 +632,17 @@ export default function TrainPage() {
             >
               {saveError ? '重试保存' : (currentIdx < 4 ? '下一题' : '完成本轮')}
             </button>
+            {/* 统一语音入口：底部最右，下一题按钮右边，输入到当前待回答的追问框 */}
+            {voiceSupported && analysisVoice && (
+              <button
+                className={`${styles.voiceBtn} ${recordingTarget === analysisVoice.target ? styles.voiceBtnActive : ''}`}
+                onClick={() => toggleVoice(analysisVoice.target, analysisVoice.setter)}
+                title={recordingTarget === analysisVoice.target ? '停止录音' : analysisVoice.hint}
+                type="button"
+              >
+                <MicIcon recording={recordingTarget === analysisVoice.target} />
+              </button>
+            )}
           </div>
         </div>
       )}

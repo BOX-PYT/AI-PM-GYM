@@ -182,7 +182,7 @@ export default function RadarHomePage() {
             <p className={styles.suggestText}>还没有能力数据。花 2 分钟做个摸底，先测出你的 AI PM 能力画像，再看该补哪一维。</p>
             <button
               className={styles.suggestBtn}
-              onClick={() => { localStorage.setItem('aipk_onboarded', '1'); navigate('/train/comprehensive/session', { state: { level: '入门' } }) }}
+              onClick={() => { localStorage.setItem('aipk_onboarded', '1'); navigate('/train/comprehensive/session', { state: { level: '入门', isPlacement: true } }) }}
             >
               开始 2 分钟摸底测
             </button>
