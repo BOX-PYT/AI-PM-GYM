@@ -172,6 +172,17 @@
   background: var(--accent-dim);
 }
 
+/* 带目标提示的语音按钮（分析视图底部）：图标 + 目标输入框名 */
+.voiceBtnLabeled {
+  width: auto;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--font);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 /* CTA button: bordered accent, sits in the footer row */
 .ctaBtn {
   border: 1px solid var(--accent);

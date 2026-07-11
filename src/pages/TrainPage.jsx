@@ -169,8 +169,8 @@ export default function TrainPage() {
 
   // 分析视图里底部统一语音入口的目标输入框：优先面试官追问回复框，其次概念追问框（已用掉则无目标）
   const analysisVoice = ivActive && !ivDone && ivChallenge
-    ? { target: 'ivreply', setter: setIvReply, hint: '语音回答面试官追问' }
-    : (!followUpQ ? { target: 'followup', setter: setFollowUpInput, hint: '语音输入追问' } : null)
+    ? { target: 'ivreply', setter: setIvReply, hint: '语音回答面试官追问', short: '面试官' }
+    : (!followUpQ ? { target: 'followup', setter: setFollowUpInput, hint: '语音输入追问', short: '追问' } : null)
 
   async function handleViewAnalysis() {
     if (!unlocked || !currentQ) return
@@ -546,8 +546,11 @@ export default function TrainPage() {
               <div style={{ display: 'flex', gap: 8 }}>
                 <textarea
                   className={styles.textarea}
-                  style={{ minHeight: 40, flex: 1 }}
-                  placeholder="对题目或答案里的概念有疑问？可以追问一次"
+                  style={{
+                    minHeight: 40, flex: 1,
+                    boxShadow: recordingTarget === 'followup' ? 'inset 0 0 0 1px var(--accent)' : 'none',
+                  }}
+                  placeholder={recordingTarget === 'followup' ? '正在听，说出你的追问...' : '对题目或答案里的概念有疑问？可以追问一次'}
                   value={followUpInput}
                   onChange={e => setFollowUpInput(e.target.value)}
                   disabled={followUpLoading}
@@ -587,8 +590,11 @@ export default function TrainPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <textarea
                       className={styles.textarea}
-                      style={{ minHeight: 40, flex: 1 }}
-                      placeholder="回答面试官的追问"
+                      style={{
+                        minHeight: 40, flex: 1,
+                        boxShadow: recordingTarget === 'ivreply' ? 'inset 0 0 0 1px var(--accent)' : 'none',
+                      }}
+                      placeholder={recordingTarget === 'ivreply' ? '正在听，说出你的回答...' : '回答面试官的追问'}
                       value={ivReply}
                       onChange={e => setIvReply(e.target.value)}
                       disabled={ivLoading}
@@ -632,15 +638,16 @@ export default function TrainPage() {
             >
               {saveError ? '重试保存' : (currentIdx < 4 ? '下一题' : '完成本轮')}
             </button>
-            {/* 统一语音入口：底部最右，下一题按钮右边，输入到当前待回答的追问框 */}
+            {/* 统一语音入口：底部最右，下一题按钮右边，带目标提示（语音进哪个输入框） */}
             {voiceSupported && analysisVoice && (
               <button
-                className={`${styles.voiceBtn} ${recordingTarget === analysisVoice.target ? styles.voiceBtnActive : ''}`}
+                className={`${styles.voiceBtn} ${styles.voiceBtnLabeled} ${recordingTarget === analysisVoice.target ? styles.voiceBtnActive : ''}`}
                 onClick={() => toggleVoice(analysisVoice.target, analysisVoice.setter)}
                 title={recordingTarget === analysisVoice.target ? '停止录音' : analysisVoice.hint}
                 type="button"
               >
                 <MicIcon recording={recordingTarget === analysisVoice.target} />
+                <span>{analysisVoice.short}</span>
               </button>
             )}
           </div>
