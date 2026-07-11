@@ -167,10 +167,10 @@ export default function TrainPage() {
   const charCount = userInput.length
   const unlocked = charCount >= MIN_CHARS
 
-  // 分析视图里底部统一语音入口的目标输入框：优先面试官追问回复框，其次概念追问框（已用掉则无目标）
+  // 分析视图里底部统一语音入口的目标输入框：优先面试官追问回复框，其次概念答疑框（已用掉则无目标）
   const analysisVoice = ivActive && !ivDone && ivChallenge
     ? { target: 'ivreply', setter: setIvReply, hint: '语音回答面试官追问', short: '面试官' }
-    : (!followUpQ ? { target: 'followup', setter: setFollowUpInput, hint: '语音输入追问', short: '追问' } : null)
+    : (!followUpQ ? { target: 'followup', setter: setFollowUpInput, hint: '语音输入答疑问题', short: '答疑' } : null)
 
   async function handleViewAnalysis() {
     if (!unlocked || !currentQ) return
@@ -532,7 +532,7 @@ export default function TrainPage() {
           </div>
 
           <div className={styles.analysisBlock}>
-            <h3 className={styles.analysisLabel}>追问（1 次机会）</h3>
+            <h3 className={styles.analysisLabel}>概念答疑（1 次机会）</h3>
             {followUpQ ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>你问：{followUpQ}</p>
@@ -543,14 +543,14 @@ export default function TrainPage() {
                 )}
               </div>
             ) : (
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
                 <textarea
                   className={styles.textarea}
                   style={{
                     minHeight: 40, flex: 1,
                     boxShadow: recordingTarget === 'followup' ? 'inset 0 0 0 1px var(--accent)' : 'none',
                   }}
-                  placeholder={recordingTarget === 'followup' ? '正在听，说出你的追问...' : '对题目或答案里的概念有疑问？可以追问一次'}
+                  placeholder={recordingTarget === 'followup' ? '正在听，说出你的问题...' : '对题目或答案里的概念有疑问？可以问一次'}
                   value={followUpInput}
                   onChange={e => setFollowUpInput(e.target.value)}
                   disabled={followUpLoading}
@@ -560,7 +560,7 @@ export default function TrainPage() {
                   onClick={handleAskFollowUp}
                   disabled={!followUpInput.trim() || followUpLoading}
                 >
-                  {followUpLoading ? '生成中...' : '追问'}
+                  {followUpLoading ? '生成中...' : '提问'}
                 </button>
               </div>
             )}
@@ -579,15 +579,15 @@ export default function TrainPage() {
               ))}
 
               {!ivActive && (
-                <button className={styles.conquerBtn} onClick={startInterviewer} disabled={ivLoading}>
-                  🎤 让面试官追问我
+                <button className={styles.ctaBtn} onClick={startInterviewer} disabled={ivLoading}>
+                  让面试官追问我
                 </button>
               )}
 
               {ivActive && !ivDone && ivChallenge && (
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 600, margin: '4px 0' }}>追问 {ivRounds.length + 1}：{ivChallenge}</p>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
                     <textarea
                       className={styles.textarea}
                       style={{
